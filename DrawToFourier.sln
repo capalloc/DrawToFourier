@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.32014.148
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DrawToFourier", "DrawToFourier\DrawToFourier.csproj", "{166A0AD5-6AF4-402E-A139-10E41C9AB35E}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{166A0AD5-6AF4-402E-A139-10E41C9AB35E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{166A0AD5-6AF4-402E-A139-10E41C9AB35E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{166A0AD5-6AF4-402E-A139-10E41C9AB35E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{166A0AD5-6AF4-402E-A139-10E41C9AB35E}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {5894A3AF-0313-48C9-8B0F-C36C100A57A3}
+	EndGlobalSection
+EndGlobal
