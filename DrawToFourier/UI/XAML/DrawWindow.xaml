@@ -1,9 +1,9 @@
-﻿<Window x:Class="DrawToFourier.DrawWindow"
+﻿<Window x:Class="DrawToFourier.UI.DrawWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:DrawToFourier"
+        xmlns:local="clr-namespace:DrawToFourier.UI"
         mc:Ignorable="d"
         Title="DrawToFourier" Height="900" Width="800">
     <Grid>

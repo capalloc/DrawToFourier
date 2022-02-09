@@ -5,11 +5,12 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media.Imaging;
+using DrawToFourier.UI;
 
 namespace DrawToFourier
 {
 
-    internal class DrawToFourierApp : Application
+    internal class MainApp : Application
     {
         private Window _drawWindow;
 
@@ -22,11 +23,11 @@ namespace DrawToFourier
 
         public static void InitApp()
         {
-            DrawToFourierApp app = new DrawToFourierApp();
+            MainApp app = new MainApp();
             app.Run();
         }
 
-        public DrawToFourierApp() : base()
+        public MainApp() : base()
         {
             this.Startup += AppStartupHandler;
         }

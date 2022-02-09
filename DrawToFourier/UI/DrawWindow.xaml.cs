@@ -13,7 +13,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 
-namespace DrawToFourier
+namespace DrawToFourier.UI
 {
     public struct Line
     {
