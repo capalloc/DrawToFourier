@@ -26,9 +26,10 @@ namespace DrawToFourier.UI
             InitializeComponent();
         }
 
-        private void Window_SizeChanged(object sender, SizeChangedEventArgs e)
+        private void MainContainer_SizeChanged(object sender, SizeChangedEventArgs e)
         {
-
+            System.Diagnostics.Debug.WriteLine($"{(int)e.NewSize.Width} {(int)e.NewSize.Height}");
+            this.ImageContext.OnImageNewSizeRequest((int) e.NewSize.Width, (int) (e.NewSize.Height / (1 + (double) this.Resources["buttonMenuHeightFactor"])));
         }
     }
 }

@@ -12,25 +12,23 @@ namespace DrawToFourier.UI
 {
     public abstract class ImageBinding : INotifyPropertyChanged
     {
-        private int _imageWidth;
-        private int _imageHeight;
-        private ImageSource _image;
+        #pragma warning disable CS8618
+        protected int imageWidth;
+        protected int imageHeight;
+        protected ImageSource image;
 
-        public int ImageWidth { get { return this._imageWidth; } set { this._imageWidth = value; this.OnPropertyChanged("ImageWidth"); } }
-        public int ImageHeight { get { return this._imageHeight; } set { this._imageHeight = value; this.OnPropertyChanged("ImageHeight"); } }
-        public ImageSource Image { get; set; }
+        public int ImageWidth { get { return this.imageWidth; } set { this.imageWidth = value; OnPropertyChanged("ImageWidth"); } }
+        public int ImageHeight { get { return this.imageHeight; } set { this.imageHeight = value; OnPropertyChanged("ImageHeight"); } }
+        public ImageSource Image { get { return this.image; } set { this.image = value; OnPropertyChanged("Image"); } }
 
         public event PropertyChangedEventHandler? PropertyChanged;
 
-        private void OnPropertyChanged(string propertyName)
+        private void OnPropertyChanged(string property)
         {
-            System.Diagnostics.Debug.WriteLine($"{ImageWidth} {ImageHeight}");
             if (PropertyChanged != null)
-            {
-                System.Diagnostics.Debug.WriteLine($"{ImageWidth} {ImageHeight}");
-                this.PropertyChanged.Invoke(this, new PropertyChangedEventArgs(propertyName));
-            }
+                PropertyChanged.Invoke(this, new PropertyChangedEventArgs(property));
         }
 
+        public abstract void OnImageNewSizeRequest(int width, int height);
     }
 }

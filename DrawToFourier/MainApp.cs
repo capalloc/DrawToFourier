@@ -21,8 +21,6 @@ namespace DrawToFourier
         [STAThread]
         public static void Main(string[] args)
         {
-            System.Diagnostics.Debug.WriteLine(System.Windows.SystemParameters.PrimaryScreenHeight);
-            System.Diagnostics.Debug.WriteLine(System.Windows.SystemParameters.PrimaryScreenWidth);
             InitApp();
         }
 
