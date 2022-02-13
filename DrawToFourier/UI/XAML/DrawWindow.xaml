@@ -4,17 +4,20 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:cnv="clr-namespace:DrawToFourier.UI.Converters" 
+        xmlns:sys="clr-namespace:System;assembly=mscorlib" 
         mc:Ignorable="d"
         Title="DrawToFourier" 
         DataContext="{Binding Path=ImageContext, RelativeSource={RelativeSource Self}}"
-        SizeToContent="WidthAndHeight">
+        SizeToContent="WidthAndHeight"
+        SizeChanged="Window_SizeChanged">
     <Window.Resources>
+        <sys:Double x:Key="buttonMenuHeightFactor">0.125</sys:Double>
         <cnv:MultiplyConverter x:Key="multiplyConverter" />
     </Window.Resources>
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
-            <RowDefinition Height="{Binding ImageHeight, Converter={StaticResource multiplyConverter}, ConverterParameter=0.125}" />
+            <RowDefinition Height="{Binding ImageHeight, Converter={StaticResource multiplyConverter}, ConverterParameter={StaticResource buttonMenuHeightFactor}}" />
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="1*" />

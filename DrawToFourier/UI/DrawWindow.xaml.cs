@@ -26,6 +26,10 @@ namespace DrawToFourier.UI
             InitializeComponent();
         }
 
+        private void Window_SizeChanged(object sender, SizeChangedEventArgs e)
+        {
+
+        }
     }
 }
 

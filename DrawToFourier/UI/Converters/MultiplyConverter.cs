@@ -12,12 +12,18 @@ namespace DrawToFourier.UI.Converters
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            return (int)value * double.Parse((string)parameter, culture);
+            if (value.GetType() != typeof(int) || parameter.GetType() != typeof(double))
+                throw new ArgumentException();
+
+            return (int)value * (double)parameter;
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            return (int)value / double.Parse((string)parameter, culture);
+            if (value.GetType() != typeof(int) || parameter.GetType() != typeof(double))
+                throw new ArgumentException();
+
+            return (int)value / (double)parameter;
         }
     }
 }
