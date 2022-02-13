@@ -4,7 +4,6 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Media.Imaging;
 using DrawToFourier.UI;
 
 namespace DrawToFourier
@@ -12,29 +11,31 @@ namespace DrawToFourier
 
     internal class MainApp : Application
     {
-        private Window _drawWindow;
-
-        [STAThread]
-        public static void Main(string[] args)
-        {
-            System.Diagnostics.Debug.WriteLine("Starting app...");
-            InitApp();
-        }
-
+        
         public static void InitApp()
         {
             MainApp app = new MainApp();
             app.Run();
         }
 
+        [STAThread]
+        public static void Main(string[] args)
+        {
+            InitApp();
+        }
+
+        private Window _drawWindow;
+        private ImageHandler _imgHandlerDraw;
+
         public MainApp() : base()
         {
+            this._imgHandlerDraw = new ImageHandler();
             this.Startup += AppStartupHandler;
         }
 
         private void AppStartupHandler(object sender, StartupEventArgs e)
         {
-            this.MainWindow = this._drawWindow = new DrawWindow();
+            this.MainWindow = this._drawWindow = new DrawWindow(this._imgHandlerDraw);
             this.MainWindow.Show();
         }
 

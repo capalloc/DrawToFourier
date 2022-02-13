@@ -14,9 +14,6 @@ using System.Windows.Shapes;
 
 namespace DrawToFourier.UI
 {
-    /// <summary>
-    /// Interaction logic for ResultWindow.xaml
-    /// </summary>
     public partial class ResultWindow : Window
     {
         public ResultWindow()

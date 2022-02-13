@@ -3,26 +3,31 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:DrawToFourier.UI"
+        xmlns:cnv="clr-namespace:DrawToFourier.UI.Converters" 
         mc:Ignorable="d"
-        Title="DrawToFourier" Height="900" Width="800">
+        Title="DrawToFourier" 
+        DataContext="{Binding Path=ImageContext, RelativeSource={RelativeSource Self}}"
+        SizeToContent="WidthAndHeight">
+    <Window.Resources>
+        <cnv:MultiplyConverter x:Key="multiplyConverter" />
+    </Window.Resources>
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="8*" />
-            <RowDefinition Height="1*" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="{Binding ImageHeight, Converter={StaticResource multiplyConverter}, ConverterParameter=0.125}" />
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="1*" />
             <ColumnDefinition Width="1*" />
             <ColumnDefinition Width="1*" />
+            <ColumnDefinition Width="1*" />
         </Grid.ColumnDefinitions>
 
-        <Canvas Name="DrawCanvas" Grid.Row="0" Grid.ColumnSpan="3" Background="Transparent" MouseDown="DrawCanvas_MouseDown" MouseMove="DrawCanvas_MouseMove">
-            <Image Name="DrawImage"></Image>
-        </Canvas>
-        
-        <Button Grid.Row="1" Grid.Column="0" Margin="10,10,10,10">Load</Button>
-        <Button Grid.Row="1" Grid.Column="1" Margin="10,10,10,10">Save</Button>
-        <Button Grid.Row="1" Grid.Column="2" Margin="10,10,10,10">Simulate</Button>
+        <Rectangle Grid.Row="0" Grid.ColumnSpan="4" Height="{Binding ImageHeight}" Width="{Binding ImageWidth}" Fill="Yellow" />
+
+        <Button Grid.Row="1" Grid.Column="0" Margin="5,5,5,5" Content="Load" />
+        <Button Grid.Row="1" Grid.Column="1" Margin="5,5,5,5" Content="Save" />
+        <Button Grid.Row="1" Grid.Column="2" Margin="5,5,5,5" Content="Reset" />
+        <Button Grid.Row="1" Grid.Column="3" Margin="5,5,5,5" Content="Simulate" />
     </Grid>
 </Window>
