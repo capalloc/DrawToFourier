@@ -8,16 +8,23 @@
         mc:Ignorable="d"
         Title="DrawToFourier" 
         DataContext="{Binding RelativeSource={RelativeSource Self}}"
-        SizeToContent="WidthAndHeight"
-        >
+        SizeToContent="WidthAndHeight">
     <Window.Resources>
         <sys:Double x:Key="buttonMenuHeightFactor">0.125</sys:Double>
+        <sys:Double x:Key="minHeightToScreenFactor">0.6</sys:Double>
+        <sys:Double x:Key="minWidthToScreenFactor">0.6</sys:Double>
         <cnv:MultiplyConverter x:Key="multiplyConverter" />
     </Window.Resources>
+    <Window.MinWidth>
+        <Binding Path="ImageWrapper.Source.Width" Converter="{StaticResource multiplyConverter}" ConverterParameter="{StaticResource minWidthToScreenFactor}" />
+    </Window.MinWidth>
+    <Window.MinHeight>
+        <Binding Path="ImageWrapper.Source.Height" Converter="{StaticResource multiplyConverter}" ConverterParameter="{StaticResource minHeightToScreenFactor}" />
+    </Window.MinHeight>
     <Grid SizeChanged="MainContainer_SizeChanged" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
         <Grid>
             <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto"/>
                 <RowDefinition Height="{Binding DesiredDrawAreaHeight, Converter={StaticResource multiplyConverter}, ConverterParameter={StaticResource buttonMenuHeightFactor}}" />
             </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
@@ -27,7 +34,11 @@
                 <ColumnDefinition Width="1*" />
             </Grid.ColumnDefinitions>
 
-            <Image Name="DrawImage" Grid.Row="0" Grid.ColumnSpan="4" Height="{Binding DesiredDrawAreaHeight}" Width="{Binding DesiredDrawAreaWidth}" Source="{Binding Path=ImageWrapper.Source}" />
+            <Image Name="DrawImage" 
+                   Grid.Row="0" 
+                   Grid.ColumnSpan="4" 
+                   Height="{Binding DesiredDrawAreaHeight}" Width="{Binding DesiredDrawAreaWidth}"
+                   Source="{Binding Path=ImageWrapper.Source}" />
 
             <Button Grid.Row="1" Grid.Column="0" Margin="5,5,5,5" Content="Load" />
             <Button Grid.Row="1" Grid.Column="1" Margin="5,5,5,5" Content="Save" />
