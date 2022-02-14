@@ -134,5 +134,10 @@ namespace DrawToFourier.UI
             DrawLine(this._bmp, new Point(1,1), new Point(length-1,length-1));
         }
 
+        public override void OnMouseDown(double X, double Y)
+        {
+            throw new NotImplementedException();
+        }
+
     }
 }

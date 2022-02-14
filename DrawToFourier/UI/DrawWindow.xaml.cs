@@ -48,6 +48,15 @@ namespace DrawToFourier.UI
             if (PropertyChanged != null)
                 PropertyChanged.Invoke(this, new PropertyChangedEventArgs(property));
         }
+
+        private void DrawImage_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            double xScaleBack = this.ImageWrapper.Source.Width / this.DrawImage.ActualWidth;
+            double yScaleBack = this.ImageWrapper.Source.Height / this.DrawImage.ActualHeight;
+
+            this._imageWrapper.OnMouseDown(e.GetPosition(this.DrawImage).X * xScaleBack, e.GetPosition(this.DrawImage).Y * yScaleBack);
+        }
+
     }
 }
 

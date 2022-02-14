@@ -19,6 +19,8 @@ namespace DrawToFourier.UI
         #pragma warning disable CS8618
         private ImageSource _source;
 
+        public abstract void OnMouseDown(double X, double Y);
+
         private void OnPropertyChanged(string property)
         {
             if (PropertyChanged != null)
