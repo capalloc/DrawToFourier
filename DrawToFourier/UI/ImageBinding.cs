@@ -13,13 +13,13 @@ namespace DrawToFourier.UI
     public abstract class ImageBinding : INotifyPropertyChanged
     {
         #pragma warning disable CS8618
-        protected int imageWidth;
-        protected int imageHeight;
-        protected ImageSource image;
+        private int _desiredWidth;
+        private int _desiredHeight;
+        private ImageSource _imageSource;
 
-        public int ImageWidth { get { return this.imageWidth; } set { this.imageWidth = value; OnPropertyChanged("ImageWidth"); } }
-        public int ImageHeight { get { return this.imageHeight; } set { this.imageHeight = value; OnPropertyChanged("ImageHeight"); } }
-        public ImageSource Image { get { return this.image; } set { this.image = value; OnPropertyChanged("Image"); } }
+        public int DesiredWidth { get { return this._desiredWidth; } set { this._desiredWidth = value; OnPropertyChanged("DesiredWidth"); } }
+        public int DesiredHeight { get { return this._desiredHeight; } set { this._desiredHeight = value; OnPropertyChanged("DesiredHeight"); } }
+        public ImageSource ImageSource { get { return this._imageSource; } set { this._imageSource = value; OnPropertyChanged("ImageSource"); } }
 
         public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -29,6 +29,10 @@ namespace DrawToFourier.UI
                 PropertyChanged.Invoke(this, new PropertyChangedEventArgs(property));
         }
 
-        public abstract void OnImageNewSizeRequest(int width, int height);
+        public void NewSizeRequest(int width, int height)
+        {
+            this.DesiredWidth = width;
+            this.DesiredHeight = height;
+        }
     }
 }

@@ -28,8 +28,7 @@ namespace DrawToFourier.UI
 
         private void MainContainer_SizeChanged(object sender, SizeChangedEventArgs e)
         {
-            System.Diagnostics.Debug.WriteLine($"{(int)e.NewSize.Width} {(int)e.NewSize.Height}");
-            this.ImageContext.OnImageNewSizeRequest((int) e.NewSize.Width, (int) (e.NewSize.Height / (1 + (double) this.Resources["buttonMenuHeightFactor"])));
+            this.ImageContext.NewSizeRequest((int) e.NewSize.Width, (int) (e.NewSize.Height / (1 + (double) this.Resources["buttonMenuHeightFactor"])));
         }
     }
 }
