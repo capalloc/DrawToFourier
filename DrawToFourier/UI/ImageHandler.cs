@@ -10,7 +10,7 @@ using System.Windows.Media.Imaging;
 
 namespace DrawToFourier.UI
 {
-    internal class ImageHandler : ImageBinding
+    internal class ImageHandler : ImageSourceWrapper
     {
         public static readonly Int32Rect dotRect = new Int32Rect(0, 0, 3, 3);
 
@@ -126,12 +126,13 @@ namespace DrawToFourier.UI
         }
 
         private WriteableBitmap _bmp;
+
         public ImageHandler()
         {
             int length = Math.Min((int)(SystemParameters.PrimaryScreenWidth * 0.5), (int)(SystemParameters.PrimaryScreenHeight * 0.5));
-            this.NewSizeRequest(length, length);
-            this.ImageSource = this._bmp = new WriteableBitmap(length, length, 96, 96, PixelFormats.Bgr32, null);
+            this.Source = this._bmp = new WriteableBitmap(length, length, 96, 96, PixelFormats.Bgr32, null);
             DrawLine(this._bmp, new Point(1,1), new Point(length-1,length-1));
         }
+
     }
 }

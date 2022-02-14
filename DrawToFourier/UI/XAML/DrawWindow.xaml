@@ -7,7 +7,7 @@
         xmlns:sys="clr-namespace:System;assembly=mscorlib" 
         mc:Ignorable="d"
         Title="DrawToFourier" 
-        DataContext="{Binding Path=ImageContext, RelativeSource={RelativeSource Self}}"
+        DataContext="{Binding RelativeSource={RelativeSource Self}}"
         SizeToContent="WidthAndHeight"
         >
     <Window.Resources>
@@ -18,7 +18,7 @@
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
-                <RowDefinition Height="{Binding DesiredHeight, Converter={StaticResource multiplyConverter}, ConverterParameter={StaticResource buttonMenuHeightFactor}}" />
+                <RowDefinition Height="{Binding DesiredDrawAreaHeight, Converter={StaticResource multiplyConverter}, ConverterParameter={StaticResource buttonMenuHeightFactor}}" />
             </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="1*" />
@@ -27,7 +27,7 @@
                 <ColumnDefinition Width="1*" />
             </Grid.ColumnDefinitions>
 
-            <Image Name="DrawImage" Grid.Row="0" Grid.ColumnSpan="4" Height="{Binding DesiredHeight}" Width="{Binding DesiredWidth}" Source="{Binding ImageSource}" />
+            <Image Name="DrawImage" Grid.Row="0" Grid.ColumnSpan="4" Height="{Binding DesiredDrawAreaHeight}" Width="{Binding DesiredDrawAreaWidth}" Source="{Binding Path=ImageWrapper.Source}" />
 
             <Button Grid.Row="1" Grid.Column="0" Margin="5,5,5,5" Content="Load" />
             <Button Grid.Row="1" Grid.Column="1" Margin="5,5,5,5" Content="Save" />
