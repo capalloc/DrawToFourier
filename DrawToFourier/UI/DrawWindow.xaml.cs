@@ -14,12 +14,14 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using static DrawToFourier.Fourier.FourierCore;
 
 namespace DrawToFourier.UI
 {
     public partial class DrawWindow : Window, INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler? PropertyChanged;
+        public event ProgramActionEventHandler? ProgramAction;
 
         public ImageSourceWrapper ImageWrapper { get { return this._imageWrapper; } }
         public int DesiredDrawAreaWidth { get { return this._desiredDrawAreaWidth; } set { this._desiredDrawAreaWidth = value; OnPropertyChanged("DesiredDrawAreaWidth"); } }
@@ -31,13 +33,14 @@ namespace DrawToFourier.UI
         private double xScaleBack;
         private double yScaleBack;
 
-        public DrawWindow(ImageSourceWrapper imageWrapper)
+        public DrawWindow(ImageSourceWrapper imageWrapper, ProgramActionEventHandler programAction)
         {
             this._imageWrapper = imageWrapper;
             this.DesiredDrawAreaWidth = (int) imageWrapper.Source.Width;
             this.DesiredDrawAreaHeight = (int) imageWrapper.Source.Height;
             this.xScaleBack = 1;
             this.yScaleBack = 1;
+            this.ProgramAction += programAction;
             InitializeComponent();
         }
 
@@ -76,6 +79,29 @@ namespace DrawToFourier.UI
             this._imageWrapper.OnMouseMove(e.GetPosition(this.DrawImage).X * xScaleBack, e.GetPosition(this.DrawImage).Y * yScaleBack);
         }
 
+        private void LoadButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (this.ProgramAction != null)
+                this.ProgramAction.Invoke(this, new ProgramActionEventArgs("Load"));
+        }
+
+        private void SaveButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (this.ProgramAction != null)
+                this.ProgramAction.Invoke(this, new ProgramActionEventArgs("Save"));
+        }
+
+        private void ResetButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (this.ProgramAction != null)
+                this.ProgramAction.Invoke(this, new ProgramActionEventArgs("Reset"));
+        }
+
+        private void SimulateButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (this.ProgramAction != null)
+                this.ProgramAction.Invoke(this, new ProgramActionEventArgs("Simulate"));
+        }
     }
 }
 

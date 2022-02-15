@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
+using DrawToFourier.Fourier;
 using DrawToFourier.UI;
 
 namespace DrawToFourier
@@ -27,17 +28,19 @@ namespace DrawToFourier
 
         private Window _drawWindow;
         private ImageHandler _imgHandlerDraw;
+        private FourierCore _fourierCore;
 
         #pragma warning disable CS8618
         public MainApp() : base()
         {
             this._imgHandlerDraw = new ImageHandler();
+            this._fourierCore = new FourierCore();
             this.Startup += AppStartupHandler;
         }
 
         private void AppStartupHandler(object sender, StartupEventArgs e)
         {
-            this.MainWindow = this._drawWindow = new DrawWindow(this._imgHandlerDraw);
+            this.MainWindow = this._drawWindow = new DrawWindow(this._imgHandlerDraw, this._fourierCore.OnProgramAction);
             this.MainWindow.Show();
         }
 
