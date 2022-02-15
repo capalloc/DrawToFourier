@@ -139,5 +139,19 @@ namespace DrawToFourier.UI
             throw new NotImplementedException();
         }
 
+        public override void OnMouseLeave(double X, double Y)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void OnMouseEnter(double X, double Y)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void OnMouseMove(double X, double Y)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

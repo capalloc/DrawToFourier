@@ -39,7 +39,10 @@
                    Grid.ColumnSpan="4" 
                    Height="{Binding DesiredDrawAreaHeight}" Width="{Binding DesiredDrawAreaWidth}"
                    Source="{Binding Path=ImageWrapper.Source}"
-                   MouseDown="DrawImage_MouseDown"/>
+                   MouseDown="DrawImage_MouseDown"
+                   MouseLeave="DrawImage_MouseLeave"
+                   MouseEnter="DrawImage_MouseEnter"
+                   MouseMove="DrawImage_MouseMove"/>
 
             <Button Grid.Row="1" Grid.Column="0" Margin="5,5,5,5" Content="Load" />
             <Button Grid.Row="1" Grid.Column="1" Margin="5,5,5,5" Content="Save" />

@@ -20,6 +20,9 @@ namespace DrawToFourier.UI
         private ImageSource _source;
 
         public abstract void OnMouseDown(double X, double Y);
+        public abstract void OnMouseLeave(double X, double Y);
+        public abstract void OnMouseEnter(double X, double Y);
+        public abstract void OnMouseMove(double X, double Y);
 
         private void OnPropertyChanged(string property)
         {

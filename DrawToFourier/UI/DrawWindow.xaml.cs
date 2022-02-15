@@ -28,12 +28,16 @@ namespace DrawToFourier.UI
         private ImageSourceWrapper _imageWrapper;
         private int _desiredDrawAreaWidth;
         private int _desiredDrawAreaHeight;
+        private double xScaleBack;
+        private double yScaleBack;
 
         public DrawWindow(ImageSourceWrapper imageWrapper)
         {
             this._imageWrapper = imageWrapper;
             this.DesiredDrawAreaWidth = (int) imageWrapper.Source.Width;
             this.DesiredDrawAreaHeight = (int) imageWrapper.Source.Height;
+            this.xScaleBack = 1;
+            this.yScaleBack = 1;
             InitializeComponent();
         }
 
@@ -41,6 +45,8 @@ namespace DrawToFourier.UI
         {
             this.DesiredDrawAreaWidth = (int)e.NewSize.Width;
             this.DesiredDrawAreaHeight = (int)(e.NewSize.Height / (1 + (double)this.Resources["buttonMenuHeightFactor"]));
+            this.xScaleBack = this.ImageWrapper.Source.Width / this.DrawImage.ActualWidth;
+            this.yScaleBack = this.ImageWrapper.Source.Height / this.DrawImage.ActualHeight;
         }
 
         private void OnPropertyChanged(string property)
@@ -51,10 +57,23 @@ namespace DrawToFourier.UI
 
         private void DrawImage_MouseDown(object sender, MouseButtonEventArgs e)
         {
-            double xScaleBack = this.ImageWrapper.Source.Width / this.DrawImage.ActualWidth;
-            double yScaleBack = this.ImageWrapper.Source.Height / this.DrawImage.ActualHeight;
 
             this._imageWrapper.OnMouseDown(e.GetPosition(this.DrawImage).X * xScaleBack, e.GetPosition(this.DrawImage).Y * yScaleBack);
+        }
+
+        private void DrawImage_MouseLeave(object sender, MouseEventArgs e)
+        {
+            this._imageWrapper.OnMouseLeave(e.GetPosition(this.DrawImage).X * xScaleBack, e.GetPosition(this.DrawImage).Y * yScaleBack);
+        }
+
+        private void DrawImage_MouseEnter(object sender, MouseEventArgs e)
+        {
+            this._imageWrapper.OnMouseEnter(e.GetPosition(this.DrawImage).X * xScaleBack, e.GetPosition(this.DrawImage).Y * yScaleBack);
+        }
+
+        private void DrawImage_MouseMove(object sender, MouseEventArgs e)
+        {
+            this._imageWrapper.OnMouseMove(e.GetPosition(this.DrawImage).X * xScaleBack, e.GetPosition(this.DrawImage).Y * yScaleBack);
         }
 
     }
