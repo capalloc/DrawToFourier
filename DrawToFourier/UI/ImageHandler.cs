@@ -156,18 +156,33 @@ namespace DrawToFourier.UI
             DrawLine(this._bmp, new Point(1,1), new Point(length-1,length-1));
         }
 
+        private Point? last;
+        private bool started = false;
+
         public override void OnMouseDown(double X, double Y, MouseButton clicked)
         {
             if (this.ProgramAction != null)
             {
+                if (!started)
+                {
+                    this.started = true;
+                    this.last = new Point(X, Y);
+                }
+                
                 this.ProgramAction.Invoke(this, new CoreProgramActionEventArgs("Down", X, Y));
             }
         }
 
         public override void OnMouseLeave(double X, double Y)
         {
-            if (this.ProgramAction != null)
+            if (this.ProgramAction != null && last != null)
             {
+                if (started)
+                {
+                    Point p = new Point(X, Y);
+                    DrawLine(this._bmp, (Point) last, p);
+                    last = null;
+                }
                 this.ProgramAction.Invoke(this, new CoreProgramActionEventArgs("Leave", X, Y));
             }
         }
@@ -176,6 +191,10 @@ namespace DrawToFourier.UI
         {
             if (this.ProgramAction != null)
             {
+                if(started)
+                {
+                    this.last = new Point(X, Y);
+                }
                 this.ProgramAction.Invoke(this, new CoreProgramActionEventArgs("Enter", X, Y));
             }
         }
@@ -184,6 +203,12 @@ namespace DrawToFourier.UI
         {
             if (this.ProgramAction != null) 
             {
+                if (started && this.last != null)
+                {
+                    Point p = new Point(X, Y);
+                    DrawLine(this._bmp, (Point) last, p);
+                    last = p;
+                }
                 this.ProgramAction.Invoke(this, new CoreProgramActionEventArgs("Move", X, Y)); 
             }
         }
