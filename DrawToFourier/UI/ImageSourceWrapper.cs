@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
@@ -19,7 +20,7 @@ namespace DrawToFourier.UI
         #pragma warning disable CS8618
         private ImageSource _source;
 
-        public abstract void OnMouseDown(double X, double Y);
+        public abstract void OnMouseDown(double X, double Y, MouseButton clicked);
         public abstract void OnMouseLeave(double X, double Y);
         public abstract void OnMouseEnter(double X, double Y);
         public abstract void OnMouseMove(double X, double Y);

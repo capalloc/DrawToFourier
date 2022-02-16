@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using static DrawToFourier.Fourier.FourierCore;
@@ -155,7 +156,7 @@ namespace DrawToFourier.UI
             DrawLine(this._bmp, new Point(1,1), new Point(length-1,length-1));
         }
 
-        public override void OnMouseDown(double X, double Y)
+        public override void OnMouseDown(double X, double Y, MouseButton clicked)
         {
             if (this.ProgramAction != null)
             {

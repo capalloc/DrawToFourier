@@ -71,7 +71,7 @@ namespace DrawToFourier.UI
         private void DrawImage_MouseDown(object sender, MouseButtonEventArgs e)
         {
 
-            this._imageWrapper.OnMouseDown(e.GetPosition(this.DrawImage).X * xScaleBack, e.GetPosition(this.DrawImage).Y * yScaleBack);
+            this._imageWrapper.OnMouseDown(e.GetPosition(this.DrawImage).X * xScaleBack, e.GetPosition(this.DrawImage).Y * yScaleBack, e.ChangedButton);
         }
 
         private void DrawImage_MouseLeave(object sender, MouseEventArgs e)
