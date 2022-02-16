@@ -162,21 +162,28 @@ namespace DrawToFourier.UI
         {
             if (this.ProgramAction != null)
             {
-                if (!started)
+                if (started && clicked == MouseButton.Right && this.last != null)
+                {
+                    this.started = false;
+                    Point p = new Point(X, Y);
+                    DrawLine(this._bmp, (Point)last, p);
+                    this.last = null;
+                }
+                else if (!started && clicked == MouseButton.Right)
                 {
                     this.started = true;
                     this.last = new Point(X, Y);
                 }
-                
+
                 this.ProgramAction.Invoke(this, new CoreProgramActionEventArgs("Down", X, Y));
             }
         }
 
         public override void OnMouseLeave(double X, double Y)
         {
-            if (this.ProgramAction != null && last != null)
+            if (this.ProgramAction != null)
             {
-                if (started)
+                if (started && last != null)
                 {
                     Point p = new Point(X, Y);
                     DrawLine(this._bmp, (Point) last, p);
