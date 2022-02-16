@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using static DrawToFourier.Fourier.FourierCore;
 
 namespace DrawToFourier.UI
 {
@@ -125,33 +126,40 @@ namespace DrawToFourier.UI
             return p1.Y + (x - p1.X) * (p2.Y - p1.Y) / (p2.X - p1.X);
         }
 
+        public event CoreProgramActionEventHandler? ProgramAction;
+
         private WriteableBitmap _bmp;
 
-        public ImageHandler()
+        public ImageHandler(CoreProgramActionEventHandler programAction)
         {
             int length = Math.Min((int)(SystemParameters.PrimaryScreenWidth * 0.5), (int)(SystemParameters.PrimaryScreenHeight * 0.5));
             this.Source = this._bmp = new WriteableBitmap(length, length, 96, 96, PixelFormats.Bgr32, null);
+            ProgramAction += programAction;
             DrawLine(this._bmp, new Point(1,1), new Point(length-1,length-1));
         }
 
         public override void OnMouseDown(double X, double Y)
         {
-            //throw new NotImplementedException();
+            if (this.ProgramAction != null)
+                this.ProgramAction.Invoke(this, new CoreProgramActionEventArgs("Down", X, Y));
         }
 
         public override void OnMouseLeave(double X, double Y)
         {
-            //throw new NotImplementedException();
+            if (this.ProgramAction != null)
+                this.ProgramAction.Invoke(this, new CoreProgramActionEventArgs("Leave", X, Y));
         }
 
         public override void OnMouseEnter(double X, double Y)
         {
-            //throw new NotImplementedException();
+            if (this.ProgramAction != null)
+                this.ProgramAction.Invoke(this, new CoreProgramActionEventArgs("Enter", X, Y));
         }
 
         public override void OnMouseMove(double X, double Y)
         {
-            //throw new NotImplementedException();
+            if (this.ProgramAction != null)
+                this.ProgramAction.Invoke(this, new CoreProgramActionEventArgs("Move", X, Y));
         }
     }
 }

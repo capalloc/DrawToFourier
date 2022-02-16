@@ -21,11 +21,19 @@ namespace DrawToFourier.UI
     public partial class DrawWindow : Window, INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler? PropertyChanged;
-        public event ProgramActionEventHandler? ProgramAction;
+        public event CoreProgramActionEventHandler? ProgramAction;
 
-        public ImageSourceWrapper ImageWrapper { get { return this._imageWrapper; } }
-        public int DesiredDrawAreaWidth { get { return this._desiredDrawAreaWidth; } set { this._desiredDrawAreaWidth = value; OnPropertyChanged("DesiredDrawAreaWidth"); } }
-        public int DesiredDrawAreaHeight { get { return this._desiredDrawAreaHeight; } set { this._desiredDrawAreaHeight = value; OnPropertyChanged("DesiredDrawAreaHeight"); } }
+        public ImageSourceWrapper ImageWrapper { 
+            get { return this._imageWrapper; } 
+        }
+        public int DesiredDrawAreaWidth { 
+            get { return this._desiredDrawAreaWidth; } 
+            set { this._desiredDrawAreaWidth = value; OnPropertyChanged("DesiredDrawAreaWidth"); } 
+        }
+        public int DesiredDrawAreaHeight { 
+            get { return this._desiredDrawAreaHeight; } 
+            set { this._desiredDrawAreaHeight = value; OnPropertyChanged("DesiredDrawAreaHeight"); } 
+        }
 
         private ImageSourceWrapper _imageWrapper;
         private int _desiredDrawAreaWidth;
@@ -33,7 +41,7 @@ namespace DrawToFourier.UI
         private double xScaleBack;
         private double yScaleBack;
 
-        public DrawWindow(ImageSourceWrapper imageWrapper, ProgramActionEventHandler programAction)
+        public DrawWindow(ImageSourceWrapper imageWrapper, CoreProgramActionEventHandler programAction)
         {
             this._imageWrapper = imageWrapper;
             this.DesiredDrawAreaWidth = (int) imageWrapper.Source.Width;
@@ -82,25 +90,25 @@ namespace DrawToFourier.UI
         private void LoadButton_Click(object sender, RoutedEventArgs e)
         {
             if (this.ProgramAction != null)
-                this.ProgramAction.Invoke(this, new ProgramActionEventArgs("Load"));
+                this.ProgramAction.Invoke(this, new CoreProgramActionEventArgs("Load"));
         }
 
         private void SaveButton_Click(object sender, RoutedEventArgs e)
         {
             if (this.ProgramAction != null)
-                this.ProgramAction.Invoke(this, new ProgramActionEventArgs("Save"));
+                this.ProgramAction.Invoke(this, new CoreProgramActionEventArgs("Save"));
         }
 
         private void ResetButton_Click(object sender, RoutedEventArgs e)
         {
             if (this.ProgramAction != null)
-                this.ProgramAction.Invoke(this, new ProgramActionEventArgs("Reset"));
+                this.ProgramAction.Invoke(this, new CoreProgramActionEventArgs("Reset"));
         }
 
         private void SimulateButton_Click(object sender, RoutedEventArgs e)
         {
             if (this.ProgramAction != null)
-                this.ProgramAction.Invoke(this, new ProgramActionEventArgs("Simulate"));
+                this.ProgramAction.Invoke(this, new CoreProgramActionEventArgs("Simulate"));
         }
     }
 }

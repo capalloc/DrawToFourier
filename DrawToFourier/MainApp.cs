@@ -33,14 +33,14 @@ namespace DrawToFourier
         #pragma warning disable CS8618
         public MainApp() : base()
         {
-            this._imgHandlerDraw = new ImageHandler();
             this._fourierCore = new FourierCore();
+            this._imgHandlerDraw = new ImageHandler(this._fourierCore.OnPathAction);
             this.Startup += AppStartupHandler;
         }
 
         private void AppStartupHandler(object sender, StartupEventArgs e)
         {
-            this.MainWindow = this._drawWindow = new DrawWindow(this._imgHandlerDraw, this._fourierCore.OnProgramAction);
+            this.MainWindow = this._drawWindow = new DrawWindow(this._imgHandlerDraw, this._fourierCore.OnUIAction);
             this.MainWindow.Show();
         }
 
