@@ -56,8 +56,10 @@ namespace DrawToFourier.UI
         {
             this.DesiredDrawAreaWidth = (int)e.NewSize.Width;
             this.DesiredDrawAreaHeight = (int)(e.NewSize.Height / (1 + (double)this.Resources["buttonMenuHeightFactor"]));
-            this.xScaleBack = this.ImageWrapper.Source.Width / this.DrawImage.ActualWidth;
-            this.yScaleBack = this.ImageWrapper.Source.Height / this.DrawImage.ActualHeight;
+            this.Dispatcher.InvokeAsync(() => {
+                this.xScaleBack = this.ImageWrapper.Source.Width / this.DrawImage.ActualWidth;
+                this.yScaleBack = this.ImageWrapper.Source.Height / this.DrawImage.ActualHeight;
+            }, System.Windows.Threading.DispatcherPriority.Background);
         }
 
         private void OnPropertyChanged(string property)
