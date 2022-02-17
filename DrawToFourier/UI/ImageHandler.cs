@@ -175,14 +175,15 @@ namespace DrawToFourier.UI
         public event CoreProgramActionEventHandler? ProgramAction;
 
         private WriteableBitmap _bmp;
-        private Queue<Point> captureSequence;
+        private Queue<Point> _captureSequence;
+        private bool _newlyEnteredCanvas;
 
         public ImageHandler(CoreProgramActionEventHandler programAction)
         {
             int length = Math.Min((int)(SystemParameters.PrimaryScreenWidth * 0.5), (int)(SystemParameters.PrimaryScreenHeight * 0.5));
             this.Source = this._bmp = new WriteableBitmap(length, length, 96, 96, PixelFormats.Bgr32, null);
             ProgramAction += programAction;
-            this.captureSequence = new Queue<Point>(3);
+            this._captureSequence = new Queue<Point>(4);
         }
 
         public override void OnMouseDown(double X, double Y, MouseButton clicked)
@@ -194,15 +195,15 @@ namespace DrawToFourier.UI
                 switch (clicked)
                 {
                     case MouseButton.Right:
-                        if (this.captureSequence.Any())
+                        if (this._captureSequence.Any())
                         {
-                            Point l = this.captureSequence.Last();
-                            this.captureSequence.Clear();
+                            Point l = this._captureSequence.Last();
+                            this._captureSequence.Clear();
                             DrawLine(this._bmp, p, l);
                         }
                         else
                         {
-                            this.captureSequence.Enqueue(p);
+                            this._captureSequence.Enqueue(p);
                             DrawDot(this._bmp, p);
                         }
                         break;
@@ -214,19 +215,19 @@ namespace DrawToFourier.UI
 
         public override void OnMouseLeave(double X, double Y)
         {
-            if (this.ProgramAction != null && this.captureSequence.Any())
+            if (this.ProgramAction != null && this._captureSequence.Any())
             {
                 Point p = new Point(X, Y);
-                Point l = this.captureSequence.Last();
+                Point l = this._captureSequence.Last();
 
                 if (p.Equals(l))
                     return;
 
                 DrawLine(this._bmp, p, l);
-                this.captureSequence.Enqueue(p);
+                this._captureSequence.Enqueue(p);
 
-                if (this.captureSequence.Count > 3)
-                    this.captureSequence.Dequeue();
+                if (this._captureSequence.Count > 4)
+                    this._captureSequence.Dequeue();
 
                 this.ProgramAction.Invoke(this, new CoreProgramActionEventArgs("Leave", X, Y));
             }
@@ -234,20 +235,20 @@ namespace DrawToFourier.UI
 
         public override void OnMouseEnter(double X, double Y)
         {
-            if (this.ProgramAction != null && this.captureSequence.Any())
+            if (this.ProgramAction != null && this._captureSequence.Any())
             {
                 Point p = new Point(X, Y);
-                Point l = this.captureSequence.Last();
+                Point l = this._captureSequence.Last();
 
                 if (p.Equals(l))
                     return;
 
-                this.captureSequence.Enqueue(p);
+                this._captureSequence.Enqueue(p);
 
-                if (this.captureSequence.Count > 3)
-                    this.captureSequence.Dequeue();
+                if (this._captureSequence.Count > 4)
+                    this._captureSequence.Dequeue();
 
-                this.captureSequence.ToString();
+                this._newlyEnteredCanvas = true;
 
                 this.ProgramAction.Invoke(this, new CoreProgramActionEventArgs("Enter", X, Y));
             }
@@ -255,38 +256,40 @@ namespace DrawToFourier.UI
 
         public override void OnMouseMove(double X, double Y)
         {
-            if (this.ProgramAction != null && this.captureSequence.Any()) 
+            if (this.ProgramAction != null && this._captureSequence.Any()) 
             {
                 Point p = new Point(X, Y);
-                Point l = this.captureSequence.Last();
+                Point l = this._captureSequence.Last();
 
                 if (p.Equals(l))
                     return;
 
                 DrawLine(this._bmp, p, l);
-                this.captureSequence.Enqueue(p);
+                this._captureSequence.Enqueue(p);
 
-                if (this.captureSequence.Count > 3)
-                    this.captureSequence.Dequeue();
+                if (this._captureSequence.Count > 4)
+                    this._captureSequence.Dequeue();
+
+                if (this._newlyEnteredCanvas)
+                {
+                    Point[] bezierPoints = this._captureSequence.ToArray();
+                    Func<double, Point> bezierCalc = cubicBezierGenerator(bezierPoints[3], bezierPoints[2], bezierPoints[1], bezierPoints[0], 0.5);
+
+                    for (double t = 0; t < 1; t += 0.05)
+                    {
+                        Point bPoint = bezierCalc(t);
+                        //System.Diagnostics.Debug.WriteLine($"{bPoint.X} {bPoint.Y}");
+                        DrawLine(this._bmp, l, bPoint);
+                        l = bPoint;
+                    }
+
+                    DrawLine(this._bmp, l, bezierCalc(1));
+
+                    this._newlyEnteredCanvas = false;
+                }
 
                 this.ProgramAction.Invoke(this, new CoreProgramActionEventArgs("Move", X, Y));
             }
         }
     }
 }
-
-/*
- Point l = (Point) bezierStart;
-
-                            Func<double, Point> bezierCalc = cubicBezierGenerator((Point)bezierStartBase, l, (Point)bezierEnd, (Point)bezierEndBase, 0.5);
-
-                            for (double t = 0; t < 1; t += 0.05)
-                            {
-                                Point P = bezierCalc(t);
-                                System.Diagnostics.Debug.WriteLine($"{P.X} {P.Y}");
-                                DrawLine(this._bmp, l, P);
-                                l = P;
-                            }
-
-                            DrawLine(this._bmp, l, bezierCalc(1));
- */
