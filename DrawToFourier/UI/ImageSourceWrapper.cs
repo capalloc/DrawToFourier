@@ -11,6 +11,7 @@ using System.Windows.Media.Imaging;
 
 namespace DrawToFourier.UI
 {
+    // Provides an abstraction layer for providing means of transmitting mouse actions to custom implementations of image/canvas handling and using custom image sources.
     public abstract class ImageSourceWrapper : INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler? PropertyChanged;

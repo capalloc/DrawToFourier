@@ -14,6 +14,7 @@ namespace DrawToFourier.UI
 {
     internal class ImageHandler : ImageSourceWrapper
     {
+        // Draws a white 3x3 square (called a dot) on the given bitmap and point. If no pixel is updated on the bitmap, returns false, otherwise returns true.
         public static bool DrawDot(WriteableBitmap bmp, Point dotCenter)
         {
             Int32Rect rect = new Int32Rect(0, 0, 3, 3);
@@ -68,6 +69,9 @@ namespace DrawToFourier.UI
             return true;
         }
 
+        // Draws a line with 3 pixel stroke on the given bitmap between given points.
+        // It does this by linearly interpolating points between given input points and draws a dot on each of them.
+        // Returns the last drawn point (right now return value may not be correct)
         public static Point DrawLine(WriteableBitmap bmp, Point p1, Point p2)
         {
             Vector pD = p2 - p1;
@@ -135,6 +139,7 @@ namespace DrawToFourier.UI
             return lastTarget;
         }
 
+        // Linear interpolation between two points
         public static double Linear(double x, Point p1, Point p2)
         {
             if ((p2.X - p1.X) == 0)
@@ -144,6 +149,9 @@ namespace DrawToFourier.UI
             return p1.Y + (x - p1.X) * (p2.Y - p1.Y) / (p2.X - p1.X);
         }
 
+        // Returns a Cubic Bezier Function for easily calculating the bezier points between given two lines, with non-base points being the points of lines where bezier curve is
+        // starting and ending (p0 and p3), and base points being the far end of those two lines (used for calculating slopes/sin/cos). 'lengthToDistanceFactor' determines how far
+        // the reference points of p1 and p2 are from p0 and p3, as a factor of the distance between starting and ending points p0 and p3.
         public static Func<double, Point> cubicBezierGenerator(Point startPointBase, Point startPoint, Point endPoint, Point endPointBase, double lengthToDistanceFactor)
         {
             double distance = (endPoint - startPoint).Length;
@@ -170,18 +178,22 @@ namespace DrawToFourier.UI
 
                 return (Point)pointVector.Zip(multiplyVector, (pV, m) => pV * m).Aggregate(new Vector(0, 0), (prev, next) => prev + next);
             };
-        }  
+        }
 
+        // This event is used to notify 'FourierCore' of mouse events.
         public event CoreProgramActionEventHandler? ProgramAction;
 
         private WriteableBitmap _bmp;
-        private Queue<Point> _captureSequence;
-        private Point? startPoint;
-        private Point? startPointBase;
-        private bool _newlyEnteredCanvas;
+        private Queue<Point> _captureSequence; // Holds 4 of the last drawn points. Empty when path is complete or not yet drawn.
+        private bool _newlyEnteredCanvas; // Set true when the cursor first enters the image space after leaving. Set to false afterwards.
+
+        // Used for retaining starting point data of the path for drawing bezier curve for the completion of the path
+        private Point? _startPoint;
+        private Point? _startPointBase;
 
         public ImageHandler(CoreProgramActionEventHandler programAction)
         {
+            // Initial image size should be a square with length equal to the half of smaller side of the user screen
             int length = Math.Min((int)(SystemParameters.PrimaryScreenWidth * 0.5), (int)(SystemParameters.PrimaryScreenHeight * 0.5));
             this.Source = this._bmp = new WriteableBitmap(length, length, 96, 96, PixelFormats.Bgr32, null);
             ProgramAction += programAction;
@@ -201,18 +213,19 @@ namespace DrawToFourier.UI
                         {
                             if (this._captureSequence.Count < 4)
                             {
-                                throw new NotImplementedException();
+                                throw new NotImplementedException(); // If there are not enough path points to generate a bezier curve
                             }
 
                             Point l = this._captureSequence.Last();
 
-                            if (!p.Equals(l))
+                            if (!p.Equals(l)) // If not duplicate
                                 DrawLine(this._bmp, p, l);
 
+                            // Draw bezier curve between starting and ending of the path
                             Point[] bezierPoints = this._captureSequence.ToArray();
 
                             #pragma warning disable CS8629
-                            Func<double, Point> bezierCalc = cubicBezierGenerator(bezierPoints[2], bezierPoints[3], (Point)this.startPoint, (Point)this.startPointBase, 0.5);
+                            Func<double, Point> bezierCalc = cubicBezierGenerator(bezierPoints[2], bezierPoints[3], (Point)this._startPoint, (Point)this._startPointBase, 0.5);
 
                             for (double t = 0; t < 1; t += 0.05)
                             {
@@ -224,14 +237,14 @@ namespace DrawToFourier.UI
                             DrawLine(this._bmp, l, bezierCalc(1));
 
                             this._captureSequence.Clear();
-                            this.startPoint = null;
-                            this.startPointBase = null;
+                            this._startPoint = null;
+                            this._startPointBase = null;
                         }
-                        else
+                        else // Starting the path
                         {
                             this._captureSequence.Enqueue(p);
-                            this.startPoint = p;
-                            this.startPointBase = null;
+                            this._startPoint = p;
+                            this._startPointBase = null;
                             DrawDot(this._bmp, p);
                         }
                         break;
@@ -240,18 +253,19 @@ namespace DrawToFourier.UI
                         {
                             if (this._captureSequence.Count < 4)
                             {
-                                throw new NotImplementedException();
+                                throw new NotImplementedException(); // If there are not enough path points to generate a bezier curve
                             }
 
                             Point l = this._captureSequence.Last();
 
-                            if (!p.Equals(l))
+                            if (!p.Equals(l)) // If not duplicate
                                 DrawLine(this._bmp, p, l);
 
+                            // Draw bezier curve between starting and ending of the path
                             Point[] bezierPoints = this._captureSequence.ToArray();
 
                             #pragma warning disable CS8629
-                            Func<double, Point> bezierCalc = cubicBezierGenerator(bezierPoints[2], bezierPoints[3], (Point)this.startPoint, (Point)this.startPointBase, 0.5);
+                            Func<double, Point> bezierCalc = cubicBezierGenerator(bezierPoints[2], bezierPoints[3], (Point)this._startPoint, (Point)this._startPointBase, 0.5);
 
                             for (double t = 0; t < 1; t += 0.05)
                             {
@@ -263,8 +277,8 @@ namespace DrawToFourier.UI
                             DrawLine(this._bmp, l, bezierCalc(1));
 
                             this._captureSequence.Clear();
-                            this.startPoint = null;
-                            this.startPointBase = null;
+                            this._startPoint = null;
+                            this._startPointBase = null;
                         }
                         break;
                 }
@@ -280,7 +294,7 @@ namespace DrawToFourier.UI
                 Point p = new Point(X, Y);
                 Point l = this._captureSequence.Last();
 
-                if (p.Equals(l))
+                if (p.Equals(l)) // If duplicate
                     return;
 
                 DrawLine(this._bmp, p, l);
@@ -289,8 +303,8 @@ namespace DrawToFourier.UI
                 if (this._captureSequence.Count > 4)
                     this._captureSequence.Dequeue();
 
-                if (this.startPoint.Equals(l))
-                    this.startPointBase = p;
+                if (this._startPoint.Equals(l))
+                    this._startPointBase = p;
 
                 this.ProgramAction.Invoke(this, new CoreProgramActionEventArgs("Leave", X, Y));
             }
@@ -303,7 +317,7 @@ namespace DrawToFourier.UI
                 Point p = new Point(X, Y);
                 Point l = this._captureSequence.Last();
 
-                if (p.Equals(l))
+                if (p.Equals(l)) // If duplicate
                     return;
 
                 this._captureSequence.Enqueue(p);
@@ -313,8 +327,8 @@ namespace DrawToFourier.UI
 
                 this._newlyEnteredCanvas = true;
 
-                if (this.startPoint.Equals(l))
-                    this.startPointBase = p;
+                if (this._startPoint.Equals(l))
+                    this._startPointBase = p;
 
                 this.ProgramAction.Invoke(this, new CoreProgramActionEventArgs("Enter", X, Y));
             }
@@ -327,7 +341,7 @@ namespace DrawToFourier.UI
                 Point p = new Point(X, Y);
                 Point l = this._captureSequence.Last();
 
-                if (p.Equals(l))
+                if (p.Equals(l)) // If duplicate
                     return;
 
                 DrawLine(this._bmp, p, l);
@@ -336,10 +350,12 @@ namespace DrawToFourier.UI
                 if (this._captureSequence.Count > 4)
                     this._captureSequence.Dequeue();
 
-                if (this.startPoint.Equals(l))
-                    this.startPointBase = p;
+                if (this._startPoint.Equals(l))
+                    this._startPointBase = p;
 
-                if (this._newlyEnteredCanvas)
+                // If this is the second point after entering the draw area, draw bezier curve between the point just before leaving
+                // the draw area and point just after entering the draw area.
+                if (this._newlyEnteredCanvas) 
                 {
                     Point[] bezierPoints = this._captureSequence.ToArray();
                     Func<double, Point> bezierCalc = cubicBezierGenerator(bezierPoints[3], bezierPoints[2], bezierPoints[1], bezierPoints[0], 0.5);

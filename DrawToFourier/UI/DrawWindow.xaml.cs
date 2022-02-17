@@ -21,11 +21,15 @@ namespace DrawToFourier.UI
     public partial class DrawWindow : Window, INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler? PropertyChanged;
+
+        // This event is used to notify 'FourierCore' of button events. Mouse events are routed through 'ImageSourceWrapper'.
         public event CoreProgramActionEventHandler? ProgramAction;
 
         public ImageSourceWrapper ImageWrapper { 
             get { return this._imageWrapper; } 
         }
+
+        // Desired size properties represent the target draw area size based on current window size
         public int DesiredDrawAreaWidth { 
             get { return this._desiredDrawAreaWidth; } 
             set { this._desiredDrawAreaWidth = value; OnPropertyChanged("DesiredDrawAreaWidth"); } 
@@ -38,7 +42,9 @@ namespace DrawToFourier.UI
         private ImageSourceWrapper _imageWrapper;
         private int _desiredDrawAreaWidth;
         private int _desiredDrawAreaHeight;
-        private double xScaleBack;
+
+        // Scaleback variables are used to translate draw area coordinates to image coordinates
+        private double xScaleBack; 
         private double yScaleBack;
 
         public DrawWindow(ImageSourceWrapper imageWrapper, CoreProgramActionEventHandler programAction)
@@ -52,10 +58,13 @@ namespace DrawToFourier.UI
             InitializeComponent();
         }
 
+        // When the window is resized by the user, the desired size of the draw area and size of button menu is programmatically set based on
+        // proportions given as a window resource 'buttonMenuHeightFactor'.
         private void MainContainer_SizeChanged(object sender, SizeChangedEventArgs e)
         {
             this.DesiredDrawAreaWidth = (int)e.NewSize.Width;
             this.DesiredDrawAreaHeight = (int)(e.NewSize.Height / (1 + (double)this.Resources["buttonMenuHeightFactor"]));
+            // Scaleback variables are set asynchronously with a low priority because to calculate them correctly, render thread must update first
             this.Dispatcher.InvokeAsync(() => {
                 this.xScaleBack = this.ImageWrapper.Source.Width / this.DrawImage.ActualWidth;
                 this.yScaleBack = this.ImageWrapper.Source.Height / this.DrawImage.ActualHeight;

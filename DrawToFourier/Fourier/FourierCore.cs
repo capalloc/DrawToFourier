@@ -6,8 +6,10 @@ using System.Threading.Tasks;
 
 namespace DrawToFourier.Fourier
 {
+    // Business logic of the program, i.e. computations directly related to Fourier resides here.
     public class FourierCore
     {
+        // This class communicates with the UI by getting notified through its delegates, which should be passed to the UI classes and subscribed to respective events
         public class CoreProgramActionEventArgs : EventArgs
         {
             public string? ActionName { get; set; }

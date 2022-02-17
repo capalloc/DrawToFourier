@@ -8,6 +8,7 @@ using System.Windows.Data;
 
 namespace DrawToFourier.UI.Converters
 {
+    // A converter to be used in multiplying two numbers in XAML bindings
     public class MultiplyConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
