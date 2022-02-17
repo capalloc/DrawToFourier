@@ -41,7 +41,7 @@ namespace DrawToFourier.Fourier
 
         public void OnPathAction(object sender, CoreProgramActionEventArgs e)
         {
-            System.Diagnostics.Debug.WriteLine($"{e.ActionName} {e.X} {e.Y}");
+            //System.Diagnostics.Debug.WriteLine($"{e.ActionName} {e.X} {e.Y}");
         }
     }
 }

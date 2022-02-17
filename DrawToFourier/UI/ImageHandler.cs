@@ -175,76 +175,118 @@ namespace DrawToFourier.UI
         public event CoreProgramActionEventHandler? ProgramAction;
 
         private WriteableBitmap _bmp;
+        private Queue<Point> captureSequence;
 
         public ImageHandler(CoreProgramActionEventHandler programAction)
         {
             int length = Math.Min((int)(SystemParameters.PrimaryScreenWidth * 0.5), (int)(SystemParameters.PrimaryScreenHeight * 0.5));
             this.Source = this._bmp = new WriteableBitmap(length, length, 96, 96, PixelFormats.Bgr32, null);
             ProgramAction += programAction;
+            this.captureSequence = new Queue<Point>(3);
         }
-
-        private Point? last;
-        private bool started = false;
 
         public override void OnMouseDown(double X, double Y, MouseButton clicked)
         {
             if (this.ProgramAction != null)
             {
-                if (started && clicked == MouseButton.Right && this.last != null)
-                {
-                    this.started = false;
-                    Point p = new Point(X, Y);
-                    DrawLine(this._bmp, (Point)last, p);
-                    this.last = null;
-                }
-                else if (!started && clicked == MouseButton.Right)
-                {
-                    this.started = true;
-                    this.last = new Point(X, Y);
-                }
+                Point p = new Point(X, Y);
 
+                switch (clicked)
+                {
+                    case MouseButton.Right:
+                        if (this.captureSequence.Any())
+                        {
+                            Point l = this.captureSequence.Last();
+                            this.captureSequence.Clear();
+                            DrawLine(this._bmp, p, l);
+                        }
+                        else
+                        {
+                            this.captureSequence.Enqueue(p);
+                            DrawDot(this._bmp, p);
+                        }
+                        break;
+                }
+                
                 this.ProgramAction.Invoke(this, new CoreProgramActionEventArgs("Down", X, Y));
             }
         }
 
         public override void OnMouseLeave(double X, double Y)
         {
-            if (this.ProgramAction != null)
+            if (this.ProgramAction != null && this.captureSequence.Any())
             {
-                if (started && last != null)
-                {
-                    Point p = new Point(X, Y);
-                    DrawLine(this._bmp, (Point) last, p);
-                    last = null;
-                }
+                Point p = new Point(X, Y);
+                Point l = this.captureSequence.Last();
+
+                if (p.Equals(l))
+                    return;
+
+                DrawLine(this._bmp, p, l);
+                this.captureSequence.Enqueue(p);
+
+                if (this.captureSequence.Count > 3)
+                    this.captureSequence.Dequeue();
+
                 this.ProgramAction.Invoke(this, new CoreProgramActionEventArgs("Leave", X, Y));
             }
         }
 
         public override void OnMouseEnter(double X, double Y)
         {
-            if (this.ProgramAction != null)
+            if (this.ProgramAction != null && this.captureSequence.Any())
             {
-                if(started)
-                {
-                    this.last = new Point(X, Y);
-                }
+                Point p = new Point(X, Y);
+                Point l = this.captureSequence.Last();
+
+                if (p.Equals(l))
+                    return;
+
+                this.captureSequence.Enqueue(p);
+
+                if (this.captureSequence.Count > 3)
+                    this.captureSequence.Dequeue();
+
+                this.captureSequence.ToString();
+
                 this.ProgramAction.Invoke(this, new CoreProgramActionEventArgs("Enter", X, Y));
             }
         }
 
         public override void OnMouseMove(double X, double Y)
         {
-            if (this.ProgramAction != null) 
+            if (this.ProgramAction != null && this.captureSequence.Any()) 
             {
-                if (started && this.last != null)
-                {
-                    Point p = new Point(X, Y);
-                    DrawLine(this._bmp, (Point) last, p);
-                    last = p;
-                }
-                this.ProgramAction.Invoke(this, new CoreProgramActionEventArgs("Move", X, Y)); 
+                Point p = new Point(X, Y);
+                Point l = this.captureSequence.Last();
+
+                if (p.Equals(l))
+                    return;
+
+                DrawLine(this._bmp, p, l);
+                this.captureSequence.Enqueue(p);
+
+                if (this.captureSequence.Count > 3)
+                    this.captureSequence.Dequeue();
+
+                this.ProgramAction.Invoke(this, new CoreProgramActionEventArgs("Move", X, Y));
             }
         }
     }
 }
+
+/*
+ Point l = (Point) bezierStart;
+
+                            Func<double, Point> bezierCalc = cubicBezierGenerator((Point)bezierStartBase, l, (Point)bezierEnd, (Point)bezierEndBase, 0.5);
+
+                            for (double t = 0; t < 1; t += 0.05)
+                            {
+                                Point P = bezierCalc(t);
+                                System.Diagnostics.Debug.WriteLine($"{P.X} {P.Y}");
+                                DrawLine(this._bmp, l, P);
+                                l = P;
+                            }
+
+                            DrawLine(this._bmp, l, bezierCalc(1));
+ */
