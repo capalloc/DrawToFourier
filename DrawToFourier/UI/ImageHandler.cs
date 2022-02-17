@@ -83,7 +83,7 @@ namespace DrawToFourier.UI
                         Point targetP = new Point((double)x, Linear(x, p1, p2));
                         if (!DrawDot(bmp, targetP))
                         {
-                            return lastTarget;
+                            //return lastTarget;
                         }
                         lastTarget = targetP;
                     }
@@ -95,7 +95,7 @@ namespace DrawToFourier.UI
                         Point targetP = new Point((double)x, Linear(x, p1, p2));
                         if (!DrawDot(bmp, targetP))
                         {
-                            return lastTarget;
+                            //return lastTarget;
                         }
                         lastTarget = targetP;
                     }
@@ -113,7 +113,7 @@ namespace DrawToFourier.UI
                         Point targetP = new Point(Linear(y, tp1, tp2), (double)y);
                         if (!DrawDot(bmp, targetP))
                         {
-                            return lastTarget;
+                            //return lastTarget;
                         }
                         lastTarget = targetP;
                     }
@@ -125,7 +125,7 @@ namespace DrawToFourier.UI
                         Point targetP = new Point(Linear(y, tp1, tp2), (double)y);
                         if (!DrawDot(bmp, targetP))
                         {
-                            return lastTarget;
+                            //return lastTarget;
                         }
                         lastTarget = targetP;
                     }
@@ -153,7 +153,6 @@ namespace DrawToFourier.UI
             int length = Math.Min((int)(SystemParameters.PrimaryScreenWidth * 0.5), (int)(SystemParameters.PrimaryScreenHeight * 0.5));
             this.Source = this._bmp = new WriteableBitmap(length, length, 96, 96, PixelFormats.Bgr32, null);
             ProgramAction += programAction;
-            DrawLine(this._bmp, new Point(1,1), new Point(length-1,length-1));
         }
 
         public override void OnMouseDown(double X, double Y, MouseButton clicked)
