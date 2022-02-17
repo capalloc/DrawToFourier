@@ -176,6 +176,8 @@ namespace DrawToFourier.UI
 
         private WriteableBitmap _bmp;
         private Queue<Point> _captureSequence;
+        private Point? startPoint;
+        private Point? startPointBase;
         private bool _newlyEnteredCanvas;
 
         public ImageHandler(CoreProgramActionEventHandler programAction)
@@ -194,17 +196,65 @@ namespace DrawToFourier.UI
 
                 switch (clicked)
                 {
-                    case MouseButton.Right:
-                        if (this._captureSequence.Any())
+                    case MouseButton.Left:
+                        if (this._captureSequence.Any()) // Should result in solid last path
                         {
                             Point l = this._captureSequence.Last();
+
+                            if (!p.Equals(l))
+                                DrawLine(this._bmp, p, l);
+
+                            Point[] bezierPoints = this._captureSequence.ToArray();
+
+                            #pragma warning disable CS8629
+                            Func<double, Point> bezierCalc = cubicBezierGenerator(bezierPoints[2], bezierPoints[3], (Point)this.startPoint, (Point)this.startPointBase, 0.5);
+
+                            for (double t = 0; t < 1; t += 0.05)
+                            {
+                                Point bPoint = bezierCalc(t);
+                                DrawLine(this._bmp, l, bPoint);
+                                l = bPoint;
+                            }
+                            
+                            DrawLine(this._bmp, l, bezierCalc(1));
+
                             this._captureSequence.Clear();
-                            DrawLine(this._bmp, p, l);
+                            this.startPoint = null;
+                            this.startPointBase = null;
                         }
                         else
                         {
                             this._captureSequence.Enqueue(p);
+                            this.startPoint = p;
+                            this.startPointBase = null;
                             DrawDot(this._bmp, p);
+                        }
+                        break;
+                    case MouseButton.Right: // Should result in transparent last path
+                        if (this._captureSequence.Any())
+                        {
+                            Point l = this._captureSequence.Last();
+
+                            if (!p.Equals(l))
+                                DrawLine(this._bmp, p, l);
+
+                            Point[] bezierPoints = this._captureSequence.ToArray();
+
+                            #pragma warning disable CS8629
+                            Func<double, Point> bezierCalc = cubicBezierGenerator(bezierPoints[2], bezierPoints[3], (Point)this.startPoint, (Point)this.startPointBase, 0.5);
+
+                            for (double t = 0; t < 1; t += 0.05)
+                            {
+                                Point bPoint = bezierCalc(t);
+                                DrawLine(this._bmp, l, bPoint);
+                                l = bPoint;
+                            }
+
+                            DrawLine(this._bmp, l, bezierCalc(1));
+
+                            this._captureSequence.Clear();
+                            this.startPoint = null;
+                            this.startPointBase = null;
                         }
                         break;
                 }
@@ -229,6 +279,9 @@ namespace DrawToFourier.UI
                 if (this._captureSequence.Count > 4)
                     this._captureSequence.Dequeue();
 
+                if (this.startPoint.Equals(l))
+                    this.startPointBase = p;
+
                 this.ProgramAction.Invoke(this, new CoreProgramActionEventArgs("Leave", X, Y));
             }
         }
@@ -250,6 +303,9 @@ namespace DrawToFourier.UI
 
                 this._newlyEnteredCanvas = true;
 
+                if (this.startPoint.Equals(l))
+                    this.startPointBase = p;
+
                 this.ProgramAction.Invoke(this, new CoreProgramActionEventArgs("Enter", X, Y));
             }
         }
@@ -270,6 +326,9 @@ namespace DrawToFourier.UI
                 if (this._captureSequence.Count > 4)
                     this._captureSequence.Dequeue();
 
+                if (this.startPoint.Equals(l))
+                    this.startPointBase = p;
+
                 if (this._newlyEnteredCanvas)
                 {
                     Point[] bezierPoints = this._captureSequence.ToArray();
@@ -278,7 +337,6 @@ namespace DrawToFourier.UI
                     for (double t = 0; t < 1; t += 0.05)
                     {
                         Point bPoint = bezierCalc(t);
-                        //System.Diagnostics.Debug.WriteLine($"{bPoint.X} {bPoint.Y}");
                         DrawLine(this._bmp, l, bPoint);
                         l = bPoint;
                     }
