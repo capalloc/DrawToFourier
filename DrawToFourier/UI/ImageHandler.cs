@@ -144,6 +144,34 @@ namespace DrawToFourier.UI
             return p1.Y + (x - p1.X) * (p2.Y - p1.Y) / (p2.X - p1.X);
         }
 
+        public static Func<double, Point> cubicBezierGenerator(Point startPointBase, Point startPoint, Point endPoint, Point endPointBase, double lengthToDistanceFactor)
+        {
+            double distance = (endPoint - startPoint).Length;
+
+            Vector normalizedStartVector = startPoint - startPointBase;
+            Vector normalizedEndVector = endPoint - endPointBase;
+            normalizedStartVector.Normalize();
+            normalizedEndVector.Normalize();
+
+            Vector[] pointVector = new Vector[] { 
+                ((Vector)startPoint), 
+                ((Vector)startPoint) + normalizedStartVector * distance * lengthToDistanceFactor, 
+                ((Vector)endPoint) + normalizedEndVector * distance * lengthToDistanceFactor, 
+                ((Vector)endPoint) 
+            };
+
+            return (double t) => {
+                double[] multiplyVector = new double[] {
+                    Math.Pow(1 - t, 3),
+                    3 * Math.Pow(1 - t, 2) * t,
+                    3 * (1 - t) * Math.Pow(t, 2),
+                    Math.Pow(t, 3)
+                };
+
+                return (Point)pointVector.Zip(multiplyVector, (pV, m) => pV * m).Aggregate(new Vector(0, 0), (prev, next) => prev + next);
+            };
+        }  
+
         public event CoreProgramActionEventHandler? ProgramAction;
 
         private WriteableBitmap _bmp;
