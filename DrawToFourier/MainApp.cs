@@ -22,128 +22,98 @@ namespace DrawToFourier
             app.Run();
         }
 
-        public Path ActivePath { get; }
-
         private Window _drawWindow;
         private ImageHandler _imgHandlerDraw;
         private FourierCore _fourierCore;
-        private Point lastMouseEventLocation;
+        private Point _lastMouseEventLocation;
 
-        private LinkedList<Path> completedPaths;
-        private Path? activePath;
+        private LinkedList<Path> _completedPaths;
+        private Path? _activePath;
 
         public MainApp() : base()
         {
             this._fourierCore = new FourierCore();
             this._imgHandlerDraw = new ImageHandler();
-            this.completedPaths = new LinkedList<Path>();
+            this._completedPaths = new LinkedList<Path>();
             this.Startup += AppStartupHandler;
         }
 
+        // Mouse Events From 'DrawWindow'
+
         public void OnMouseDown(double x, double y, MouseButton changedButton)
         {
-            if (changedButton != MouseButton.Left && changedButton != MouseButton.Right)
+            if (changedButton != MouseButton.Left && changedButton != MouseButton.Right) // Only left and right mouse buttons should do something
                 return;
 
             Point p = new Point(x, y);
 
-            if (this.activePath == null)  // If path is not created yet
+            if (this._activePath == null)  // If path is not created yet
             {
-                this.activePath = new Path(p);
+                this._activePath = new Path(p);
             }
             else
             {
                 LinkedList<Line> addedLines = new LinkedList<Line>();
 
-                if (!lastMouseEventLocation.Equals(p))  // If point is not duplicate
+                if (!_lastMouseEventLocation.Equals(p))  // If point is not duplicate
                 {
-                    addedLines = this.activePath.addPoint(p);
-
-                    foreach (Line line in addedLines)
-                        if (line.IsSolid) this._imgHandlerDraw.DrawLine(line.Start, line.End);
+                    addedLines = this._activePath.addPoint(p);
+                    DrawLines(addedLines);
                 }
 
-                if (this.activePath.LineCount < 1)   // If the path consists of a single point
+                if (this._activePath.LineCount < 1)   // If the path consists of a single point, delete path
                 {
-                    this.activePath = null;
+                    this._activePath = null;
                     return;
                 }
 
                 switch (changedButton)
                 {
                     case MouseButton.Left:
-                        addedLines = this.activePath.finishSolid();
+                        addedLines = this._activePath.finish(true);
                         break;
                     case MouseButton.Right:
-                        addedLines = this.activePath.finishTransparent();
+                        addedLines = this._activePath.finish(false);
                         break;
                 }
 
-                foreach (Line line in addedLines)
-                    if (line.IsSolid) this._imgHandlerDraw.DrawLine(line.Start, line.End);
-
-                this.completedPaths.AddLast(this.activePath);
-                this.activePath = null;
+                DrawLines(addedLines);
+                this._completedPaths.AddLast(this._activePath);
+                this._activePath = null;
             }
 
-            lastMouseEventLocation = p;
+            _lastMouseEventLocation = p;
         }
 
         public void OnMouseMove(double x, double y)
         {
-            if (this.activePath == null)
+            if (this._activePath == null)
                 return;
 
             Point p = new Point(x, y);
 
-            if (!lastMouseEventLocation.Equals(p))  // If point is not duplicate
+            if (!_lastMouseEventLocation.Equals(p))  // If point is not duplicate
             {
-                LinkedList<Line> addedLines = this.activePath.addPoint(p);
-
-                foreach (Line line in addedLines)
-                    if (line.IsSolid) this._imgHandlerDraw.DrawLine(line.Start, line.End);
-
-                lastMouseEventLocation = p;
+                LinkedList<Line> addedLines = this._activePath.addPoint(p);
+                DrawLines(addedLines);
+                _lastMouseEventLocation = p;
             }
         }
 
         public void OnMouseLeave(double x, double y)
         {
-            if (this.activePath == null)
-                return;
+            OnMouseMove(x, y);
 
-            Point p = new Point(x, y);
-
-            if (!lastMouseEventLocation.Equals(p))  // If point is not duplicate
-            {
-                LinkedList<Line> addedLines = this.activePath.addPoint(p);
-
-                foreach (Line line in addedLines)
-                    if (line.IsSolid) this._imgHandlerDraw.DrawLine(line.Start, line.End);
-
-                lastMouseEventLocation = p;
-            }
-
-            this.activePath.BezierEnabled = true;
+            if (this._activePath != null)
+                this._activePath.setBezierNext(); // Leaving the draw area triggers bezier drawing for the next two 'addPoint' calls.
         }
 
         public void OnMouseEnter(double x, double y)
         {
-            if (this.activePath == null)
-                return;
-
-            Point p = new Point(x, y);
-
-            if (!lastMouseEventLocation.Equals(p))  // If point is not duplicate
-            {
-                LinkedList<Line> addedLines = this.activePath.addPoint(p);
-
-                foreach (Line line in addedLines)
-                    if (line.IsSolid) this._imgHandlerDraw.DrawLine(line.Start, line.End);
-
-                lastMouseEventLocation = p;
-            }
+            OnMouseMove(x, y); // Mouse entering the draw area doesn't do anything special. Out of boundary operations are handled in 'OnMouseMove' and 'Path'
         }
+
+        // Button Events From 'DrawWindow'
 
         public void Load()
         {
@@ -171,5 +141,10 @@ namespace DrawToFourier
             this.MainWindow.Show();
         }
 
+        private void DrawLines(LinkedList<Line> lines)
+        {
+            foreach (Line line in lines)
+                if (line.IsSolid) this._imgHandlerDraw.DrawLine(line.Start, line.End);
+        }
     }
 }
