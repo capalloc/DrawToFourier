@@ -33,7 +33,7 @@ namespace DrawToFourier.UI
             this.Source = this._bmp = new WriteableBitmap(length, length, 96, 96, PixelFormats.Bgr32, null);
         }
 
-        // Draws a white 3x3 square (called a dot) on current bitmap and point. If no pixel is updated on the bitmap, returns false, otherwise returns true.
+        // Draws a white 3x3 square (called a dot) on current bitmap at given point. If no pixel is updated on the bitmap, returns false, otherwise returns true.
         public bool DrawDot(Point dotCenter)
         {
             Int32Rect rect = new Int32Rect(0, 0, 3, 3);

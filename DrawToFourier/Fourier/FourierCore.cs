@@ -10,9 +10,5 @@ namespace DrawToFourier.Fourier
     public class FourierCore
     {
         
-        public FourierCore()
-        {
-        }
-
     }
 }
