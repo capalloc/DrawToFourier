@@ -22,7 +22,7 @@ namespace DrawToFourier.UI
     {
         public event PropertyChangedEventHandler? PropertyChanged;
 
-        // This event is used to notify 'FourierCore' of button events. Mouse events are routed through 'ImageSourceWrapper'.
+        // This event is used to notify 'FourierCore' of button events. Mouse events are routed through 'ImageSourceWrapper' to 'ImageHandler'.
         public event CoreProgramActionEventHandler? ProgramAction;
 
         public ImageSourceWrapper ImageWrapper { 

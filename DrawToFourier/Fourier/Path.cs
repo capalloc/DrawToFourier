@@ -6,12 +6,12 @@ using System.Threading.Tasks;
 
 namespace DrawToFourier.Fourier
 {
-    internal struct Line
+    public struct Line
     {
 
     }
 
-    internal class Path
+    public class Path
     {
 
     }

@@ -34,7 +34,7 @@ namespace DrawToFourier
         public MainApp() : base()
         {
             this._fourierCore = new FourierCore();
-            this._imgHandlerDraw = new ImageHandler(this._fourierCore.OnPathAction);
+            this._imgHandlerDraw = new ImageHandler(this._fourierCore);
             this.Startup += AppStartupHandler;
         }
 

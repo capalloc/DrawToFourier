@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DrawToFourier.Fourier;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
@@ -180,9 +181,7 @@ namespace DrawToFourier.UI
             };
         }
 
-        // This event is used to notify 'FourierCore' of mouse events.
-        public event CoreProgramActionEventHandler? ProgramAction;
-
+        private FourierCore fc;
         private WriteableBitmap _bmp;
         private Queue<Point> _captureSequence; // Holds 4 of the last drawn points. Empty when path is complete or not yet drawn.
         private bool _newlyEnteredCanvas; // Set true when the cursor first enters the image space after leaving. Set to false afterwards.
@@ -191,20 +190,18 @@ namespace DrawToFourier.UI
         private Point? _startPoint;
         private Point? _startPointBase;
 
-        public ImageHandler(CoreProgramActionEventHandler programAction)
+        public ImageHandler(FourierCore fc)
         {
             // Initial image size should be a square with length equal to the half of smaller side of the user screen
             int length = Math.Min((int)(SystemParameters.PrimaryScreenWidth * 0.5), (int)(SystemParameters.PrimaryScreenHeight * 0.5));
             this.Source = this._bmp = new WriteableBitmap(length, length, 96, 96, PixelFormats.Bgr32, null);
-            ProgramAction += programAction;
             this._captureSequence = new Queue<Point>(4);
+            this.fc = fc;
         }
 
         public override void OnMouseDown(double X, double Y, MouseButton clicked)
         {
-            if (this.ProgramAction != null)
-            {
-                Point p = new Point(X, Y);
+            Point p = new Point(X, Y);
 
                 switch (clicked)
                 {
@@ -282,14 +279,11 @@ namespace DrawToFourier.UI
                         }
                         break;
                 }
-                
-                this.ProgramAction.Invoke(this, new CoreProgramActionEventArgs("Down", X, Y));
-            }
         }
 
         public override void OnMouseLeave(double X, double Y)
         {
-            if (this.ProgramAction != null && this._captureSequence.Any())
+            if (this._captureSequence.Any())
             {
                 Point p = new Point(X, Y);
                 Point l = this._captureSequence.Last();
@@ -305,14 +299,12 @@ namespace DrawToFourier.UI
 
                 if (this._startPoint.Equals(l))
                     this._startPointBase = p;
-
-                this.ProgramAction.Invoke(this, new CoreProgramActionEventArgs("Leave", X, Y));
             }
         }
 
         public override void OnMouseEnter(double X, double Y)
         {
-            if (this.ProgramAction != null && this._captureSequence.Any())
+            if (this._captureSequence.Any())
             {
                 Point p = new Point(X, Y);
                 Point l = this._captureSequence.Last();
@@ -329,14 +321,12 @@ namespace DrawToFourier.UI
 
                 if (this._startPoint.Equals(l))
                     this._startPointBase = p;
-
-                this.ProgramAction.Invoke(this, new CoreProgramActionEventArgs("Enter", X, Y));
             }
         }
 
         public override void OnMouseMove(double X, double Y)
         {
-            if (this.ProgramAction != null && this._captureSequence.Any()) 
+            if (this._captureSequence.Any()) 
             {
                 Point p = new Point(X, Y);
                 Point l = this._captureSequence.Last();
@@ -371,8 +361,6 @@ namespace DrawToFourier.UI
 
                     this._newlyEnteredCanvas = false;
                 }
-
-                this.ProgramAction.Invoke(this, new CoreProgramActionEventArgs("Move", X, Y));
             }
         }
     }
