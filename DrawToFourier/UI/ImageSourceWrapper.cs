@@ -11,7 +11,7 @@ using System.Windows.Media.Imaging;
 
 namespace DrawToFourier.UI
 {
-    // Provides an abstraction layer for providing means of transmitting mouse actions to custom implementations of image/canvas handling and using custom image sources.
+    // Provides an abstraction layer for providing means of image/canvas handling and using custom image sources.
     public abstract class ImageSourceWrapper : INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler? PropertyChanged;
@@ -20,11 +20,6 @@ namespace DrawToFourier.UI
 
         #pragma warning disable CS8618
         private ImageSource _source;
-
-        public abstract void OnMouseDown(double X, double Y, MouseButton clicked);
-        public abstract void OnMouseLeave(double X, double Y);
-        public abstract void OnMouseEnter(double X, double Y);
-        public abstract void OnMouseMove(double X, double Y);
 
         private void OnPropertyChanged(string property)
         {

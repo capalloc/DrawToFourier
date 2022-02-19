@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DrawToFourier.Fourier;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Globalization;
@@ -22,9 +23,6 @@ namespace DrawToFourier.UI
     {
         public event PropertyChangedEventHandler? PropertyChanged;
 
-        // This event is used to notify 'FourierCore' of button events. Mouse events are routed through 'ImageSourceWrapper' to 'ImageHandler'.
-        public event CoreProgramActionEventHandler? ProgramAction;
-
         public ImageSourceWrapper ImageWrapper { 
             get { return this._imageWrapper; } 
         }
@@ -47,14 +45,13 @@ namespace DrawToFourier.UI
         private double xScaleBack; 
         private double yScaleBack;
 
-        public DrawWindow(ImageSourceWrapper imageWrapper, CoreProgramActionEventHandler programAction)
+        public DrawWindow(ImageSourceWrapper imageWrapper)
         {
             this._imageWrapper = imageWrapper;
             this.DesiredDrawAreaWidth = (int) imageWrapper.Source.Width;
             this.DesiredDrawAreaHeight = (int) imageWrapper.Source.Height;
             this.xScaleBack = 1;
             this.yScaleBack = 1;
-            this.ProgramAction += programAction;
             InitializeComponent();
         }
 
@@ -71,55 +68,50 @@ namespace DrawToFourier.UI
             }, System.Windows.Threading.DispatcherPriority.Background);
         }
 
-        private void OnPropertyChanged(string property)
-        {
-            if (PropertyChanged != null)
-                PropertyChanged.Invoke(this, new PropertyChangedEventArgs(property));
-        }
-
         private void DrawImage_MouseDown(object sender, MouseButtonEventArgs e)
         {
-
-            this._imageWrapper.OnMouseDown(e.GetPosition(this.DrawImage).X * xScaleBack, e.GetPosition(this.DrawImage).Y * yScaleBack, e.ChangedButton);
+            ((MainApp)Application.Current).OnMouseDown(e.GetPosition(this.DrawImage).X * xScaleBack, e.GetPosition(this.DrawImage).Y * yScaleBack, e.ChangedButton);
         }
 
         private void DrawImage_MouseLeave(object sender, MouseEventArgs e)
         {
-            this._imageWrapper.OnMouseLeave(e.GetPosition(this.DrawImage).X * xScaleBack, e.GetPosition(this.DrawImage).Y * yScaleBack);
+            ((MainApp)Application.Current).OnMouseLeave(e.GetPosition(this.DrawImage).X * xScaleBack, e.GetPosition(this.DrawImage).Y * yScaleBack);
         }
 
         private void DrawImage_MouseEnter(object sender, MouseEventArgs e)
         {
-            this._imageWrapper.OnMouseEnter(e.GetPosition(this.DrawImage).X * xScaleBack, e.GetPosition(this.DrawImage).Y * yScaleBack);
+            ((MainApp)Application.Current).OnMouseEnter(e.GetPosition(this.DrawImage).X * xScaleBack, e.GetPosition(this.DrawImage).Y * yScaleBack);
         }
 
         private void DrawImage_MouseMove(object sender, MouseEventArgs e)
         {
-            this._imageWrapper.OnMouseMove(e.GetPosition(this.DrawImage).X * xScaleBack, e.GetPosition(this.DrawImage).Y * yScaleBack);
+            ((MainApp)Application.Current).OnMouseMove(e.GetPosition(this.DrawImage).X * xScaleBack, e.GetPosition(this.DrawImage).Y * yScaleBack);
         }
 
         private void LoadButton_Click(object sender, RoutedEventArgs e)
         {
-            if (this.ProgramAction != null)
-                this.ProgramAction.Invoke(this, new CoreProgramActionEventArgs("Load"));
+            ((MainApp)Application.Current).Load();
         }
 
         private void SaveButton_Click(object sender, RoutedEventArgs e)
         {
-            if (this.ProgramAction != null)
-                this.ProgramAction.Invoke(this, new CoreProgramActionEventArgs("Save"));
+            ((MainApp)Application.Current).Save();
         }
 
         private void ResetButton_Click(object sender, RoutedEventArgs e)
         {
-            if (this.ProgramAction != null)
-                this.ProgramAction.Invoke(this, new CoreProgramActionEventArgs("Reset"));
+            ((MainApp)Application.Current).Reset();
         }
 
         private void SimulateButton_Click(object sender, RoutedEventArgs e)
         {
-            if (this.ProgramAction != null)
-                this.ProgramAction.Invoke(this, new CoreProgramActionEventArgs("Simulate"));
+            ((MainApp)Application.Current).Simulate();
+        }
+
+        private void OnPropertyChanged(string property)
+        {
+            if (PropertyChanged != null)
+                PropertyChanged.Invoke(this, new PropertyChangedEventArgs(property));
         }
     }
 }
