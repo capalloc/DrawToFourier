@@ -82,7 +82,6 @@ namespace DrawToFourier
                 foreach (Line line in addedLines)
                     if (line.IsSolid) this._imgHandlerDraw.DrawLine(line.Start, line.End);
 
-
                 this.completedPaths.AddLast(this.activePath);
                 this.activePath = null;
             }

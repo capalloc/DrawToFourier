@@ -9,9 +9,9 @@ namespace DrawToFourier.Fourier
 {
     public struct Line
     {
-        public Point Start { get; }
-        public Point End { get; }
-        public bool IsSolid { get; }
+        public Point Start { get; set; }
+        public Point End { get; set; }
+        public bool IsSolid { get; set; }
 
         public Line(Point start, Point end, bool isSolid)
         {
@@ -62,6 +62,7 @@ namespace DrawToFourier.Fourier
 
         private Point origin;
         private LinkedList<Line> lines;
+        private Line bezierEndLine;
 
         public Path(Point origin)
         {
@@ -69,11 +70,46 @@ namespace DrawToFourier.Fourier
             this.lines = new LinkedList<Line>();
             this.LineCount = 0;
             this.BezierEnabled = false;
+            this.bezierEndLine.IsSolid = false;
         }
 
         public LinkedList<Line> addPoint(Point p)
         {
             LinkedList<Line> newLines = new LinkedList<Line>();
+
+            if (this.BezierEnabled)
+            {   
+                if (this.bezierEndLine.IsSolid == false)
+                {
+                    this.bezierEndLine.Start = p;
+                    this.bezierEndLine.IsSolid = true;
+                } 
+                else
+                {
+                    this.bezierEndLine.End = p;
+
+                    Func<double, Point> bezierFunc = cubicBezierGenerator(this.lines.Last().Start, this.lines.Last().End, this.bezierEndLine.Start, this.bezierEndLine.End, 0.5);
+                    Line newLine;
+
+                    for (int i = 1; i <= 20; i++)
+                    {
+                        double t = i * 0.05;
+                        newLine = new Line(this.lines.Last().End, bezierFunc(t), true);
+                        newLines.AddLast(newLine);
+                        this.lines.AddLast(newLine);
+                        this.LineCount++;
+                    }
+
+                    newLines.AddLast(bezierEndLine);
+                    this.lines.AddLast(bezierEndLine);
+                    this.LineCount++;
+
+                    this.BezierEnabled = false;
+                    this.bezierEndLine = new Line();
+                }
+
+                return newLines;
+            }
 
             if (this.lines.Count == 0)
             {
