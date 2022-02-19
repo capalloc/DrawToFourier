@@ -50,16 +50,17 @@ namespace DrawToFourier
             if (this.activePath == null)  // If path is not created yet
             {
                 this.activePath = new Path(p);
-                this._imgHandlerDraw.DrawDot(p);
             }
             else
             {
+                LinkedList<Line> addedLines = new LinkedList<Line>();
+
                 if (!lastMouseEventLocation.Equals(p))  // If point is not duplicate
                 {
-                    LinkedList<Line> addedLines = this.activePath.addPoint(p);
+                    addedLines = this.activePath.addPoint(p);
 
                     foreach (Line line in addedLines)
-                        this._imgHandlerDraw.DrawLine(line.Start, line.End);
+                        if (line.IsSolid) this._imgHandlerDraw.DrawLine(line.Start, line.End);
                 }
 
                 if (this.activePath.LineCount < 1)   // If the path consists of a single point
@@ -71,16 +72,16 @@ namespace DrawToFourier
                 switch (changedButton)
                 {
                     case MouseButton.Left:
-                        LinkedList<Line> addedLines = this.activePath.finishSolid();
-
-                        foreach (Line line in addedLines)
-                            this._imgHandlerDraw.DrawLine(line.Start, line.End);
-
+                        addedLines = this.activePath.finishSolid();
                         break;
                     case MouseButton.Right:
-                        this.activePath.finishTransparent();
+                        addedLines = this.activePath.finishTransparent();
                         break;
                 }
+
+                foreach (Line line in addedLines)
+                    if (line.IsSolid) this._imgHandlerDraw.DrawLine(line.Start, line.End);
+
 
                 this.completedPaths.AddLast(this.activePath);
                 this.activePath = null;
@@ -101,7 +102,7 @@ namespace DrawToFourier
                 LinkedList<Line> addedLines = this.activePath.addPoint(p);
 
                 foreach (Line line in addedLines)
-                    this._imgHandlerDraw.DrawLine(line.Start, line.End);
+                    if (line.IsSolid) this._imgHandlerDraw.DrawLine(line.Start, line.End);
 
                 lastMouseEventLocation = p;
             }
@@ -119,7 +120,7 @@ namespace DrawToFourier
                 LinkedList<Line> addedLines = this.activePath.addPoint(p);
 
                 foreach (Line line in addedLines)
-                    this._imgHandlerDraw.DrawLine(line.Start, line.End);
+                    if (line.IsSolid) this._imgHandlerDraw.DrawLine(line.Start, line.End);
 
                 lastMouseEventLocation = p;
             }
@@ -139,7 +140,7 @@ namespace DrawToFourier
                 LinkedList<Line> addedLines = this.activePath.addPoint(p);
 
                 foreach (Line line in addedLines)
-                    this._imgHandlerDraw.DrawLine(line.Start, line.End);
+                    if (line.IsSolid) this._imgHandlerDraw.DrawLine(line.Start, line.End);
 
                 lastMouseEventLocation = p;
             }

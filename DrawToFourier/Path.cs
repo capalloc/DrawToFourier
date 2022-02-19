@@ -107,7 +107,22 @@ namespace DrawToFourier.Fourier
             } 
             else if (this.LineCount > 1)
             {
+                Func<double, Point> bezierFunc = cubicBezierGenerator(this.lines.Last().Start, this.lines.Last().End, this.origin, this.lines.First().End, 0.5);
+                Line newLine;
 
+                for (int i = 1; i < 20; i++)
+                {
+                    double t = i * 0.05;
+                    newLine = new Line(this.lines.Last().End, bezierFunc(t), true);
+                    newLines.AddLast(newLine);
+                    this.lines.AddLast(newLine);
+                    this.LineCount++;
+                }
+
+                newLine = new Line(this.lines.Last().End, this.origin, true);
+                newLines.AddLast(newLine);
+                this.lines.AddLast(newLine);
+                this.LineCount++;
             }
 
             return newLines;
@@ -127,7 +142,22 @@ namespace DrawToFourier.Fourier
             }
             else if (this.LineCount > 1)
             {
-                
+                Func<double, Point> bezierFunc = cubicBezierGenerator(this.lines.Last().Start, this.lines.Last().End, this.origin, this.lines.First().End, 0.5);
+                Line newLine;
+
+                for (int i = 1; i < 20; i++)
+                {
+                    double t = i * 0.05;
+                    newLine = new Line(this.lines.Last().End, bezierFunc(t), false);
+                    newLines.AddLast(newLine);
+                    this.lines.AddLast(newLine);
+                    this.LineCount++;
+                }
+
+                newLine = new Line(this.lines.Last().End, this.origin, false);
+                newLines.AddLast(newLine);
+                this.lines.AddLast(newLine);
+                this.LineCount++;
             }
 
             return newLines;
