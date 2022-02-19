@@ -11,11 +11,13 @@ namespace DrawToFourier.Fourier
     {
         public Point Start { get; }
         public Point End { get; }
+        public bool IsSolid { get; }
 
-        public Line(Point start, Point end)
+        public Line(Point start, Point end, bool isSolid)
         {
             this.Start = start;
             this.End = end;
+            this.IsSolid = isSolid;
         }
 
         public Vector Normalized { get { Vector v = End - Start; v.Normalize(); return v; } }
@@ -55,25 +57,80 @@ namespace DrawToFourier.Fourier
             };
         }
 
-        private Point? origin;
-        private LinkedList<Line> lines; 
+        public int LineCount { get; private set; }
+        public bool BezierEnabled { get; set; }
 
-        public Path()
+        private Point origin;
+        private LinkedList<Line> lines;
+
+        public Path(Point origin)
         {
+            this.origin = origin;
             this.lines = new LinkedList<Line>();
+            this.LineCount = 0;
+            this.BezierEnabled = false;
         }
 
-        public void addPoint(double x, double y)
+        public LinkedList<Line> addPoint(Point p)
         {
-            if (origin == null)
+            LinkedList<Line> newLines = new LinkedList<Line>();
+
+            if (this.lines.Count == 0)
             {
-                origin = new Point(x, y);
-                return;
+                Line newLine = new Line(this.origin, p, true);
+                newLines.AddLast(newLine);
+                this.lines.AddLast(newLine);
             }
+            else
+            {
+                Line newLine = new Line(this.lines.Last().End, p, true);
+                newLines.AddLast(newLine);
+                this.lines.AddLast(newLine);
+            }
+            
+            this.LineCount++;
+
+            return newLines;
+        }
+
+        public LinkedList<Line> finishSolid()
+        {
+            LinkedList<Line> newLines = new LinkedList<Line>();
+
+            if (this.LineCount == 1)
+            {
+                Line newLine = new Line(this.lines.Last().End, this.origin, true);
+                newLines.AddLast(newLine);
+                this.lines.AddLast(newLine);
+
+                this.LineCount++;
+            } 
+            else if (this.LineCount > 1)
+            {
+
+            }
+
+            return newLines;
+        }
+
+        public LinkedList<Line> finishTransparent()
+        {
+            LinkedList<Line> newLines = new LinkedList<Line>();
+
+            if (this.LineCount == 1)
+            {
+                Line newLine = new Line(this.lines.Last().End, this.origin, false);
+                newLines.AddLast(newLine);
+                this.lines.AddLast(newLine);
+
+                this.LineCount++;
+            }
+            else if (this.LineCount > 1)
+            {
                 
-            Point lastPoint = this.lines.Last().End;
-            Line newLine = new Line(new Point(x, y), lastPoint);
-            this.lines.AddLast(newLine);
+            }
+
+            return newLines;
         }
     }
 }
