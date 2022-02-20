@@ -24,17 +24,17 @@ namespace DrawToFourier
 
         private DrawWindow _drawWindow;
         private ImageHandler _imgHandlerDraw;
-        private FourierCore _fourierCore;
         private Point _lastMouseEventLocation;
 
+        private LinkedList<FourierCore> _fouriers;
         private LinkedList<Path> _completedPaths;
         private Path? _activePath;
 
         public MainApp() : base()
         {
-            this._fourierCore = new FourierCore();
             this._imgHandlerDraw = new ImageHandler();
             this._completedPaths = new LinkedList<Path>();
+            this._fouriers = new LinkedList<FourierCore>();
             this.Startup += AppStartupHandler;
         }
 
@@ -141,7 +141,8 @@ namespace DrawToFourier
 
         public void Simulate()
         {
-            throw new NotImplementedException();
+            foreach (Path path in this._completedPaths)
+                this._fouriers.AddLast(new FourierCore(path));
         }
 
         private void AppStartupHandler(object sender, StartupEventArgs e)

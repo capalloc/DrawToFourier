@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -24,7 +25,8 @@ namespace DrawToFourier.Fourier
         public double Length { get { Vector v = End - Start; return v.Length; } }
     }
 
-    public class Path
+    // Implements 'IEnumerable' such that it returns lines of the path when iterated
+    public class Path : IEnumerable<Line>
     {
         // Returns a Cubic Bezier Function for easily calculating the bezier points between given two lines, and 'lengthToDistanceFactor' determines how far
         // the reference points of p1 and p2 are from p0 and p3, as a factor of the distance between starting and ending points p0 and p3.
@@ -160,6 +162,17 @@ namespace DrawToFourier.Fourier
         public void SetBezierNext()
         {
             this.bezierModePhase = 2;
+        }
+
+        public IEnumerator<Line> GetEnumerator()
+        {
+            foreach (Line line in this.lines)
+                yield return line;
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return this.GetEnumerator();
         }
     }
 }
