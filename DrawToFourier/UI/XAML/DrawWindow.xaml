@@ -44,10 +44,10 @@
                    MouseEnter="DrawImage_MouseEnter"
                    MouseMove="DrawImage_MouseMove"/>
 
-            <Button Grid.Row="1" Grid.Column="0" Margin="5,5,5,5" Content="Load" Click="LoadButton_Click" />
-            <Button Grid.Row="1" Grid.Column="1" Margin="5,5,5,5" Content="Save" Click="SaveButton_Click" />
-            <Button Grid.Row="1" Grid.Column="2" Margin="5,5,5,5" Content="Reset" Click="ResetButton_Click" />
-            <Button Grid.Row="1" Grid.Column="3" Margin="5,5,5,5" Content="Simulate" Click="SimulateButton_Click" />
+            <Button Grid.Row="1" Grid.Column="0" Margin="5,5,5,5" Content="Load" Click="LoadButton_Click" IsEnabled="{Binding LoadButtonEnabled}" />
+            <Button Grid.Row="1" Grid.Column="1" Margin="5,5,5,5" Content="Save" Click="SaveButton_Click" IsEnabled="{Binding SaveButtonEnabled}" />
+            <Button Grid.Row="1" Grid.Column="2" Margin="5,5,5,5" Content="Reset" Click="ResetButton_Click" IsEnabled="{Binding ResetButtonEnabled}" />
+            <Button Grid.Row="1" Grid.Column="3" Margin="5,5,5,5" Content="Simulate" Click="SimulateButton_Click" IsEnabled="{Binding SimulateButtonEnabled}" />
         </Grid>
     </Grid>
 </Window>

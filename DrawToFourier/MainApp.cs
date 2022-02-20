@@ -22,7 +22,7 @@ namespace DrawToFourier
             app.Run();
         }
 
-        private Window _drawWindow;
+        private DrawWindow _drawWindow;
         private ImageHandler _imgHandlerDraw;
         private FourierCore _fourierCore;
         private Point _lastMouseEventLocation;
@@ -50,9 +50,18 @@ namespace DrawToFourier
             if (this._activePath == null)  // If path is not created yet
             {
                 this._activePath = new Path(p);
+                this._drawWindow.LoadButtonEnabled = false;
+                this._drawWindow.SaveButtonEnabled = false;
+                this._drawWindow.ResetButtonEnabled = false;
+                this._drawWindow.SimulateButtonEnabled = false;
             }
             else
             {
+                this._drawWindow.LoadButtonEnabled = false; // Temporarily disabled
+                this._drawWindow.SaveButtonEnabled = false; // Temporarily disabled
+                this._drawWindow.ResetButtonEnabled = true;
+                this._drawWindow.SimulateButtonEnabled = true;
+
                 LinkedList<Line> addedLines = new LinkedList<Line>();
 
                 if (!_lastMouseEventLocation.Equals(p))  // If point is not duplicate

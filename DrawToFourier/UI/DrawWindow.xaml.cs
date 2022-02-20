@@ -28,18 +28,30 @@ namespace DrawToFourier.UI
         }
 
         // Desired size properties represent the target draw area size based on current window size
-        public int DesiredDrawAreaWidth { 
+        public int DesiredDrawAreaWidth
+        { 
             get { return this._desiredDrawAreaWidth; } 
             set { this._desiredDrawAreaWidth = value; OnPropertyChanged("DesiredDrawAreaWidth"); } 
         }
-        public int DesiredDrawAreaHeight { 
+        public int DesiredDrawAreaHeight 
+        { 
             get { return this._desiredDrawAreaHeight; } 
             set { this._desiredDrawAreaHeight = value; OnPropertyChanged("DesiredDrawAreaHeight"); } 
         }
 
+        public bool LoadButtonEnabled { get { return this._loadButtonEnabled; } set { this._loadButtonEnabled = value; OnPropertyChanged("LoadButtonEnabled"); } }
+        public bool SaveButtonEnabled { get { return this._saveButtonEnabled; } set { this._saveButtonEnabled = value; OnPropertyChanged("SaveButtonEnabled"); } }
+        public bool ResetButtonEnabled { get { return this._resetButtonEnabled; } set { this._resetButtonEnabled = value; OnPropertyChanged("ResetButtonEnabled"); } }
+        public bool SimulateButtonEnabled { get { return this._simulateButtonEnabled; } set { this._simulateButtonEnabled = value; OnPropertyChanged("SimulateButtonEnabled"); } }
+
         private ImageSourceWrapper _imageWrapper;
         private int _desiredDrawAreaWidth;
         private int _desiredDrawAreaHeight;
+
+        private bool _loadButtonEnabled;
+        private bool _saveButtonEnabled;
+        private bool _resetButtonEnabled;
+        private bool _simulateButtonEnabled;
 
         // Scaleback variables are used to translate draw area coordinates to image coordinates
         private double xScaleBack; 
@@ -50,6 +62,10 @@ namespace DrawToFourier.UI
             this._imageWrapper = imageWrapper;
             this.DesiredDrawAreaWidth = (int) imageWrapper.Source.Width;
             this.DesiredDrawAreaHeight = (int) imageWrapper.Source.Height;
+            this.LoadButtonEnabled = false; // Temporarily disabled
+            this.SaveButtonEnabled = false; // Temporarily disabled
+            this.ResetButtonEnabled = true;
+            this.SimulateButtonEnabled = true;
             this.xScaleBack = 1;
             this.yScaleBack = 1;
             InitializeComponent();
