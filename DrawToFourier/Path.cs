@@ -54,6 +54,7 @@ namespace DrawToFourier.Fourier
         }
 
         public int LineCount { get; private set; }
+        public double Length { get { double length = 0; foreach (Line line in this) length += line.Length; return length; } }
         
         private Point origin;
         private LinkedList<Line> lines;

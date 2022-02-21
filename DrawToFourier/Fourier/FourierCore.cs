@@ -7,100 +7,105 @@ using System.Windows;
 
 namespace DrawToFourier.Fourier
 {
+    // Represents individual units of Fourier decomposition
+    public struct FCircle
+    {
+        public int Degree { get; }
+        public double RealCoeff { get; }
+        public double ImgCoeff { get; }
+        public double Freq { get; }
+        public double Radius { get; }
+        public Func<double, Vector> CirclePos { get; }
+
+        public FCircle(int degree, double T, double realCoeff, double imgCoeff)
+        {
+            this.Degree = degree;
+            this.RealCoeff = realCoeff;
+            this.ImgCoeff = imgCoeff;
+            this.Radius = Math.Sqrt(Math.Pow(realCoeff, 2) + Math.Pow(imgCoeff, 2));
+            double w = this.Freq = 2 * Math.PI * degree / T;
+            this.CirclePos = (s) =>
+            {
+                return new Vector(
+                    realCoeff * Math.Cos(w * s) - imgCoeff * Math.Sin(w * s), 
+                    realCoeff * Math.Sin(w * s) + imgCoeff * Math.Cos(w * s)
+                );
+            };
+        }
+    }
+
     // Business logic of the program, i.e. computations directly related to Fourier resides here.
     public class FourierCore
     {
-        private double[] realCoeff = new double[19];
-        private double[] imgCoeff = new double[19];
-        private int arrayOffset = 9;
+        private FCircle baseCircle;
+        private LinkedList<FCircle> circles;
+        private double? nonSolidStart;
 
-        public FourierCore(Path path)
+        public FourierCore(Path path, int circleCount)
         {
-            double T = 0;
+            this.circles = new LinkedList<FCircle>();
 
-            foreach (Line line in path)
-                T += line.Length;
+            double[] realCoeff = new double[circleCount];
+            double[] imgCoeff = new double[circleCount];
+            int degreeOffset = circleCount / 2;
 
+            double T = path.Length;
             double cumulativeS = 0;
 
             foreach (Line line in path)
             {
                 Vector a = line.Normalized;
                 Vector b = -a * cumulativeS + (Vector)line.Start;
+                double s_f = line.Length + cumulativeS;
+                double s_s = cumulativeS;
+                double fx_f = a.X * s_f + b.X;
+                double fx_s = a.X * s_s + b.X;
+                double fy_f = a.Y * s_f + b.Y;
+                double fy_s = a.Y * s_s + b.Y;
 
-                for (int k = -arrayOffset; k < realCoeff.Length - arrayOffset; k++)
+                int k = -degreeOffset;
+                int upper_b = 0;
+
+                nonzero:
+                while (k < upper_b)
                 {
-                    double p = 2 * Math.PI * k / T;
+                    double w = 2 * Math.PI * k / T;
 
-                    if (k == 0)
-                    {
-                        Func<double, double> funcR = (s) =>
-                        {
-                            return a.X * Math.Pow(s, 2) / 2 + b.X * s;
-                        };
+                    realCoeff[k + degreeOffset] += (
+                        (w * fx_f * Math.Sin(w * s_f) + a.X * Math.Cos(w * s_f) - w * fy_f * Math.Cos(w * s_f) + a.Y * Math.Sin(w * s_f))
+                        - (w * fx_s * Math.Sin(w * s_s) + a.X * Math.Cos(w * s_s) - w * fy_s * Math.Cos(w * s_s) + a.Y * Math.Sin(w * s_s)))
+                        / (Math.Pow(w, 2) * T);
 
-                        Func<double, double> funcI = (s) =>
-                        {
-                            return a.Y * Math.Pow(s, 2) / 2 + b.Y * s;
-                        };
+                    imgCoeff[k + degreeOffset] += (
+                        (w * fx_f * Math.Cos(w * s_f) - a.X * Math.Sin(w * s_f) + w * fy_f * Math.Sin(w * s_f) + a.Y * Math.Cos(w * s_f))
+                        - (w * fx_s * Math.Cos(w * s_s) - a.X * Math.Sin(w * s_s) + w * fy_s * Math.Sin(w * s_s) + a.Y * Math.Cos(w * s_s)))
+                        / (Math.Pow(w, 2) * T);
 
-                        realCoeff[k + arrayOffset] += (funcR(line.Length + cumulativeS) - funcR(cumulativeS));
-                        imgCoeff[k + arrayOffset] += (funcI(line.Length + cumulativeS) - funcI(cumulativeS));
-                    } 
-                    else
-                    {
-                        Func<double, double> funcR = (s) =>
-                        {
-                            double fx = a.X * s + b.X;
-                            double fy = a.Y * s + b.Y;
-                            return p * fx * Math.Sin(p * s) + a.X * Math.Cos(p * s) - p * fy * Math.Cos(p * s) + a.Y * Math.Sin(p * s);
-                        };
-
-                        Func<double, double> funcI = (s) =>
-                        {
-                            double fx = a.X * s + b.X;
-                            double fy = a.Y * s + b.Y;
-                            return p * fx * Math.Cos(p * s) - a.X * Math.Sin(p * s) + p * fy * Math.Sin(p * s) + a.Y * Math.Cos(p * s);
-                        };
-
-                        realCoeff[k + arrayOffset] += (funcR(line.Length + cumulativeS) - funcR(cumulativeS)) / Math.Pow(p, 2);
-                        imgCoeff[k + arrayOffset] += (funcI(line.Length + cumulativeS) - funcI(cumulativeS)) / Math.Pow(p, 2);
-                    }
+                    k++;
                 }
+
+                if (k != circleCount - degreeOffset)
+                {
+                    k = 1;
+                    upper_b = circleCount - degreeOffset;
+                    goto nonzero;
+                }
+                
+                realCoeff[degreeOffset] += (
+                    (a.X * Math.Pow(s_f, 2) / 2 + b.X * s_f)
+                    - (a.X * Math.Pow(s_s, 2) / 2 + b.X * s_s))
+                    / T;
+
+                imgCoeff[degreeOffset] += (
+                    (a.Y * Math.Pow(s_f, 2) / 2 + b.Y * s_f)
+                    - (a.Y * Math.Pow(s_s, 2) / 2 + b.Y * s_s))
+                    / T;
+
+                if (!line.IsSolid && this.nonSolidStart == null)
+                    this.nonSolidStart = cumulativeS;
 
                 cumulativeS += line.Length;
             }
-
-            for (int i = 0; i < realCoeff.Length; i++)
-            {
-                realCoeff[i] /= T;
-                imgCoeff[i] /= T;
-            }
-
-
-            string resReal = "";
-            string resImg = "";
-
-            resReal += $"{realCoeff[arrayOffset]};";
-            resImg += $"{imgCoeff[arrayOffset]};";
-
-            for (int i = 1; i < 10;i++)
-            {
-                resReal += $"{realCoeff[arrayOffset + i]};";
-                resReal += $"{realCoeff[arrayOffset - i]}";
-                resImg += $"{imgCoeff[arrayOffset + i]};";
-                resImg += $"{imgCoeff[arrayOffset - i]}";
-
-                if (i != 9)
-                {
-                    resReal += ";";
-                    resImg += ";";
-                }
-            }
-
-            System.Diagnostics.Debug.WriteLine(resReal.Replace(',','.').Replace(';',','));
-            System.Diagnostics.Debug.WriteLine(resImg.Replace(',', '.').Replace(';', ','));
-            System.Diagnostics.Debug.WriteLine($"{T}");
         }
     }
 }

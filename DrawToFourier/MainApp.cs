@@ -142,7 +142,7 @@ namespace DrawToFourier
         public void Simulate()
         {
             foreach (Path path in this._completedPaths)
-                this._fouriers.AddLast(new FourierCore(path));
+                this._fouriers.AddLast(new FourierCore(path, 20));
         }
 
         private void AppStartupHandler(object sender, StartupEventArgs e)
