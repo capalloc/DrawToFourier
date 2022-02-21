@@ -3,10 +3,26 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:DrawToFourier.UI"
+        xmlns:cnv="clr-namespace:DrawToFourier.UI.Converters" 
+        xmlns:sys="clr-namespace:System;assembly=mscorlib" 
         mc:Ignorable="d"
-        Title="ResultWindow" Height="800" Width="800">
-    <Grid>
-        
+        Title="Simulation"
+        DataContext="{Binding RelativeSource={RelativeSource Self}}"
+        SizeToContent="WidthAndHeight">
+    <Window.Resources>
+        <sys:Double x:Key="minHeightToScreenFactor">0.6</sys:Double>
+        <sys:Double x:Key="minWidthToScreenFactor">0.6</sys:Double>
+        <cnv:MultiplyConverter x:Key="multiplyConverter" />
+    </Window.Resources>
+    <Window.MinWidth>
+        <Binding Path="ImageWrapper.Source.Width" Converter="{StaticResource multiplyConverter}" ConverterParameter="{StaticResource minWidthToScreenFactor}" />
+    </Window.MinWidth>
+    <Window.MinHeight>
+        <Binding Path="ImageWrapper.Source.Height" Converter="{StaticResource multiplyConverter}" ConverterParameter="{StaticResource minHeightToScreenFactor}" />
+    </Window.MinHeight>
+    <Grid SizeChanged="MainContainer_SizeChanged" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+        <Image Name="ResultImage"
+               Height="{Binding DesiredDrawAreaHeight}" Width="{Binding DesiredDrawAreaWidth}"
+               Source="{Binding Path=ImageWrapper.Source}"/>
     </Grid>
 </Window>

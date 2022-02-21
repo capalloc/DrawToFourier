@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -14,11 +15,49 @@ using System.Windows.Shapes;
 
 namespace DrawToFourier.UI
 {
-    public partial class ResultWindow : Window
+    public partial class ResultWindow : Window, INotifyPropertyChanged
     {
-        public ResultWindow()
+        public event PropertyChangedEventHandler? PropertyChanged;
+
+        public ImageSourceWrapper ImageWrapper
         {
+            get { return this._imageWrapper; }
+        }
+
+        // Desired size properties represent the target draw area size based on current window size
+        public int DesiredDrawAreaWidth
+        {
+            get { return this._desiredDrawAreaWidth; }
+            set { this._desiredDrawAreaWidth = value; OnPropertyChanged("DesiredDrawAreaWidth"); }
+        }
+        public int DesiredDrawAreaHeight
+        {
+            get { return this._desiredDrawAreaHeight; }
+            set { this._desiredDrawAreaHeight = value; OnPropertyChanged("DesiredDrawAreaHeight"); }
+        }
+
+        private ImageSourceWrapper _imageWrapper;
+        private int _desiredDrawAreaWidth;
+        private int _desiredDrawAreaHeight;
+
+        public ResultWindow(ImageSourceWrapper imageWrapper)
+        {
+            this._imageWrapper = imageWrapper;
+            this.DesiredDrawAreaWidth = (int)imageWrapper.Source.Width;
+            this.DesiredDrawAreaHeight = (int)imageWrapper.Source.Height;
             InitializeComponent();
+        }
+
+        private void MainContainer_SizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            this.DesiredDrawAreaWidth = (int)e.NewSize.Width;
+            this.DesiredDrawAreaHeight = (int)(e.NewSize.Height);
+        }
+
+        private void OnPropertyChanged(string property)
+        {
+            if (PropertyChanged != null)
+                PropertyChanged.Invoke(this, new PropertyChangedEventArgs(property));
         }
     }
 }

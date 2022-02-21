@@ -26,11 +26,9 @@ namespace DrawToFourier.UI
 
         private WriteableBitmap _bmp;
 
-        public ImageHandler()
+        public ImageHandler(int width, int height)
         {
-            // Initial image size should be a square with length equal to the half of smaller side of the user screen
-            int length = Math.Min((int)(SystemParameters.PrimaryScreenWidth * 0.5), (int)(SystemParameters.PrimaryScreenHeight * 0.5));
-            this.Source = this._bmp = new WriteableBitmap(length, length, 96, 96, PixelFormats.Bgr32, null);
+            this.Source = this._bmp = new WriteableBitmap(width, height, 96, 96, PixelFormats.Bgr32, null);
         }
 
         // Draws a white 3x3 square (called a dot) on current bitmap at given point. If no pixel is updated on the bitmap, returns false, otherwise returns true.

@@ -23,7 +23,9 @@ namespace DrawToFourier
         }
 
         private DrawWindow _drawWindow;
+        private ResultWindow _resultWindow;
         private ImageHandler _imgHandlerDraw;
+        private ImageHandler _imgHandlerResult;
         private Point _lastMouseEventLocation;
 
         private LinkedList<FourierCore> _fouriers;
@@ -32,7 +34,11 @@ namespace DrawToFourier
 
         public MainApp() : base()
         {
-            this._imgHandlerDraw = new ImageHandler();
+            // Image size should be a square with length equal to the half of smaller side of the user screen
+            int length = Math.Min((int)(SystemParameters.PrimaryScreenWidth * 0.5), (int)(SystemParameters.PrimaryScreenHeight * 0.5));
+
+            this._imgHandlerDraw = new ImageHandler(length, length);
+            this._imgHandlerResult = new ImageHandler(length, length);
             this._completedPaths = new LinkedList<Path>();
             this._fouriers = new LinkedList<FourierCore>();
             this.Startup += AppStartupHandler;
@@ -142,7 +148,10 @@ namespace DrawToFourier
         public void Simulate()
         {
             foreach (Path path in this._completedPaths)
-                this._fouriers.AddLast(new FourierCore(path, 3));
+                this._fouriers.AddLast(new FourierCore(path, 19));
+
+            this._resultWindow = new ResultWindow(this._imgHandlerResult);
+            this._resultWindow.Show();
         }
 
         private void AppStartupHandler(object sender, StartupEventArgs e)
