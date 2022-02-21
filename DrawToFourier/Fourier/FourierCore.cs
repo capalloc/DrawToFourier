@@ -38,12 +38,12 @@ namespace DrawToFourier.Fourier
     public class FourierCore
     {
         private FCircle baseCircle;
-        private LinkedList<FCircle> circles;
-        private double? nonSolidStart;
+        private SortedList<double, FCircle> circles;
+        private double? nonSolidStart; // Where in the path does non-solid path begins
 
         public FourierCore(Path path, int circleCount)
         {
-            this.circles = new LinkedList<FCircle>();
+            this.circles = new SortedList<double, FCircle>(Comparer<double>.Create((x, y) => y.CompareTo(x)));
 
             double[] realCoeff = new double[circleCount];
             double[] imgCoeff = new double[circleCount];
@@ -66,6 +66,7 @@ namespace DrawToFourier.Fourier
                 int k = -degreeOffset;
                 int upper_b = 0;
 
+                // Non-zero degree fourier coefficient calculation
                 nonzero:
                 while (k < upper_b)
                 {
@@ -84,13 +85,14 @@ namespace DrawToFourier.Fourier
                     k++;
                 }
 
-                if (k != circleCount - degreeOffset)
+                if (k != circleCount - degreeOffset) // Skip zero
                 {
                     k = 1;
                     upper_b = circleCount - degreeOffset;
                     goto nonzero;
                 }
                 
+                // Zero degree fourier coefficient calculation
                 realCoeff[degreeOffset] += (
                     (a.X * Math.Pow(s_f, 2) / 2 + b.X * s_f)
                     - (a.X * Math.Pow(s_s, 2) / 2 + b.X * s_s))
@@ -106,6 +108,44 @@ namespace DrawToFourier.Fourier
 
                 cumulativeS += line.Length;
             }
+
+            for (int k = -degreeOffset; k < circleCount - degreeOffset; k++)
+            {
+                FCircle newCircle = new FCircle(k, T, realCoeff[k + degreeOffset], imgCoeff[k + degreeOffset]);
+
+                if (k == 0)
+                    this.baseCircle = newCircle;
+                else
+                    this.circles.Add(newCircle.Radius, newCircle);
+            }
+
+            /*string resReal = "";
+            string resImg = "";
+            string resDeg = "";
+
+            resReal += $"{baseCircle.RealCoeff};";
+            resImg += $"{baseCircle.ImgCoeff};";
+            resDeg += $"{baseCircle.Degree};";
+
+            foreach (KeyValuePair<double, FCircle> entry in circles)
+            {
+                FCircle circle = entry.Value;
+
+                resReal += $"{circle.RealCoeff}";
+                resImg += $"{circle.ImgCoeff}";
+                resDeg += $"{circle.Degree}";
+
+                if (!entry.Equals(circles.Last())) {
+                    resReal += ";";
+                    resImg += ";";
+                    resDeg += ";";
+                }
+            }
+
+            System.Diagnostics.Debug.WriteLine(resReal.Replace(',', '.').Replace(';', ','));
+            System.Diagnostics.Debug.WriteLine(resImg.Replace(',', '.').Replace(';', ','));
+            System.Diagnostics.Debug.WriteLine(resDeg.Replace(',', '.').Replace(';', ','));
+            System.Diagnostics.Debug.WriteLine($"{T}".Replace(',', '.'));*/
         }
     }
 }
