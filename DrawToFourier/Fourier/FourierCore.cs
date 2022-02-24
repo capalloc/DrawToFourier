@@ -37,6 +37,9 @@ namespace DrawToFourier.Fourier
     // Business logic of the program, i.e. computations directly related to Fourier resides here.
     public class FourierCore
     {
+        public FCircle BaseCircle { get { return this.baseCircle; } }
+        public SortedList<double, FCircle> Circles { get { return this.circles; } }
+
         private FCircle baseCircle;
         private SortedList<double, FCircle> circles;
         private double? nonSolidStart; // Where in the path does non-solid path begins
@@ -118,34 +121,6 @@ namespace DrawToFourier.Fourier
                 else
                     this.circles.Add(newCircle.Radius, newCircle);
             }
-
-            /*string resReal = "";
-            string resImg = "";
-            string resDeg = "";
-
-            resReal += $"{baseCircle.RealCoeff};";
-            resImg += $"{baseCircle.ImgCoeff};";
-            resDeg += $"{baseCircle.Degree};";
-
-            foreach (KeyValuePair<double, FCircle> entry in circles)
-            {
-                FCircle circle = entry.Value;
-
-                resReal += $"{circle.RealCoeff}";
-                resImg += $"{circle.ImgCoeff}";
-                resDeg += $"{circle.Degree}";
-
-                if (!entry.Equals(circles.Last())) {
-                    resReal += ";";
-                    resImg += ";";
-                    resDeg += ";";
-                }
-            }
-
-            System.Diagnostics.Debug.WriteLine(resReal.Replace(',', '.').Replace(';', ','));
-            System.Diagnostics.Debug.WriteLine(resImg.Replace(',', '.').Replace(';', ','));
-            System.Diagnostics.Debug.WriteLine(resDeg.Replace(',', '.').Replace(';', ','));
-            System.Diagnostics.Debug.WriteLine($"{T}".Replace(',', '.'));*/
         }
     }
 }

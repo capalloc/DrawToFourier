@@ -155,5 +155,59 @@ namespace DrawToFourier.UI
 
             return lastTarget;
         }
+
+        public void DrawCircle(Point circleCenter, int diameter)
+        {
+            int w,h;
+            h = w = diameter;
+            uint[] arr = new uint[w * h];
+            double cX, cY;
+
+            if (diameter % 2 == 0)
+            {
+                cX = Math.Round(circleCenter.X - 0.5) + 0.5;
+                cY = Math.Round(circleCenter.Y - 0.5) + 0.5;
+            } 
+            else
+            {
+                cX = Math.Round(circleCenter.X);
+                cY = Math.Round(circleCenter.Y);
+            }
+
+            int rX = (int)(cX - diameter / 2.0 + 0.5);
+            int rY = (int)(cY - diameter / 2.0 + 0.5);
+
+            if (diameter % 2 == 0)
+            {
+                for (int i = 0; i < h; i++)
+                {
+                    double relY = rY - cY + i;
+                    double startX = Math.Round(-Math.Sqrt(Math.Pow(diameter / 2.0, 2) - Math.Pow(relY, 2)) - double.Epsilon) + 0.5;
+
+                    int jStart = (int)(cX - rX + startX);
+                    int jEnd = (int)(cX - rX - startX);
+
+                    for (int j = jStart; j <= jEnd; j++)
+                        arr[w * i + j] = 0x00FFFFFF;
+                }
+            }
+            else
+            {
+                for (int i = 0; i < h; i++)
+                {
+                    double relY = rY - cY + i;
+                    double startX = Math.Round(-Math.Sqrt(Math.Pow(diameter / 2.0, 2) - Math.Pow(relY, 2)) + 0.5 - double.Epsilon);
+
+                    int jStart = (int)(cX - rX + startX);
+                    int jEnd = (int)(cX - rX - startX);
+
+                    for (int j = jStart; j <= jEnd; j++)
+                        arr[w * i + j] = 0x00FFFFFF;
+                }
+            }
+
+            Int32Rect rect = new Int32Rect(0, 0, w, h);
+            this._bmp.WritePixels(rect, arr, 4 * w, rX, rY);
+        }
     }
 }
