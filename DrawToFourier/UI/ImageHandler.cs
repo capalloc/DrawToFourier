@@ -160,7 +160,6 @@ namespace DrawToFourier.UI
         {
             int w,h;
             h = w = diameter;
-            uint[] arr = new uint[w * h];
             double cX, cY;
 
             if (diameter % 2 == 0)
@@ -177,15 +176,44 @@ namespace DrawToFourier.UI
             int rX = (int)(cX - diameter / 2.0 + 0.5);
             int rY = (int)(cY - diameter / 2.0 + 0.5);
 
+            if (rX < 0)
+            {
+                w -= -rX;
+                rX = 0;
+            }
+            if (rY < 0)
+            {
+                h -= -rY;
+                rY = 0;
+            }
+
+            if (h <= 0 || w <= 0)
+                return;
+
+            if (rX + w > (int)this._bmp.Width)
+            {
+                w = (int)this._bmp.Width - rX;
+            }
+            if (rY + h > (int)this._bmp.Height)
+            {
+                h = (int)this._bmp.Height - rY;
+            }
+
+            if (h <= 0 || w <= 0)
+                return;
+
+            uint[] arr = new uint[w * h];
+
             if (diameter % 2 == 0)
             {
                 for (int i = 0; i < h; i++)
                 {
                     double relY = rY - cY + i;
                     double startX = Math.Round(-Math.Sqrt(Math.Pow(diameter / 2.0, 2) - Math.Pow(relY, 2)) - double.Epsilon) + 0.5;
+                    double endX = -Math.Round(-Math.Sqrt(Math.Pow(diameter / 2.0, 2) - Math.Pow(relY, 2)) - double.Epsilon) - 0.5;
 
-                    int jStart = (int)(cX - rX + startX);
-                    int jEnd = (int)(cX - rX - startX);
+                    int jStart = Math.Max((int)(cX - rX + startX), 0);
+                    int jEnd = Math.Min((int)(cX - rX + endX), w - 1);
 
                     for (int j = jStart; j <= jEnd; j++)
                         arr[w * i + j] = 0x00FFFFFF;
@@ -197,9 +225,10 @@ namespace DrawToFourier.UI
                 {
                     double relY = rY - cY + i;
                     double startX = Math.Round(-Math.Sqrt(Math.Pow(diameter / 2.0, 2) - Math.Pow(relY, 2)) + 0.5 - double.Epsilon);
+                    double endX = -Math.Round(-Math.Sqrt(Math.Pow(diameter / 2.0, 2) - Math.Pow(relY, 2)) + 0.5 - double.Epsilon);
 
-                    int jStart = (int)(cX - rX + startX);
-                    int jEnd = (int)(cX - rX - startX);
+                    int jStart = Math.Max((int)(cX - rX + startX), 0);
+                    int jEnd = Math.Min((int)(cX - rX + endX), w - 1);
 
                     for (int j = jStart; j <= jEnd; j++)
                         arr[w * i + j] = 0x00FFFFFF;
