@@ -15,6 +15,9 @@ namespace DrawToFourier
 {
     internal class MainApp : Application
     {
+        private static readonly int defaultBrushSize = 3;
+        private static readonly int defaultFourierCircleCount = 19;
+
         [STAThread]
         public static void Main(string[] args)
         {
@@ -148,7 +151,7 @@ namespace DrawToFourier
         public void Simulate()
         {
             foreach (Path path in this._completedPaths)
-                this._fouriers.AddLast(new FourierCore(path, 19));
+                this._fouriers.AddLast(new FourierCore(path, defaultFourierCircleCount));
 
             this._resultWindow = new ResultWindow(this._imgHandlerResult);
             this._resultWindow.Show();
@@ -163,7 +166,7 @@ namespace DrawToFourier
         private void DrawLines(LinkedList<Line> lines)
         {
             foreach (Line line in lines)
-                if (line.IsSolid) this._imgHandlerDraw.DrawLine(line.Start, line.End);
+                if (line.IsSolid) this._imgHandlerDraw.DrawLine(line.Start, line.End, defaultBrushSize);
         }
     }
 }
