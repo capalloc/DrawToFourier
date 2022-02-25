@@ -25,10 +25,17 @@ namespace DrawToFourier.UI
         }
 
         private WriteableBitmap _bmp;
+        private uint[] _secondBuffer;
 
         public ImageHandler(int width, int height)
         {
             this.Source = this._bmp = new WriteableBitmap(width, height, 96, 96, PixelFormats.Bgr32, null);
+            this._secondBuffer = new uint[width * height];
+        }
+
+        public void Update()
+        {
+            this._bmp.WritePixels(new Int32Rect(0, 0, this._bmp.PixelWidth, this._bmp.PixelHeight), this._secondBuffer, 4 * this._bmp.PixelWidth, 0);
         }
 
         // Draws a circle at given poit with given diameter
@@ -66,22 +73,17 @@ namespace DrawToFourier.UI
             if (h <= 0 || w <= 0) // If circle is completely outside the bounds
                 return;
 
-            if (rX + w > (int)this._bmp.Width)
+            if (rX + w > this._bmp.PixelWidth)
             {
-                w = (int)this._bmp.Width - rX;
+                w = this._bmp.PixelWidth - rX;
             }
-            if (rY + h > (int)this._bmp.Height)
+            if (rY + h > this._bmp.PixelHeight)
             {
-                h = (int)this._bmp.Height - rY;
+                h = this._bmp.PixelHeight - rY;
             }
 
             if (h <= 0 || w <= 0) // If circle is completely outside the bounds
                 return;
-
-            uint[] arr = new uint[w * h];
-            Int32Rect rect = new Int32Rect(rX, rY, w, h);
-
-            this._bmp.CopyPixels(rect, arr, w * 4, 0);
 
             if (diameter % 2 == 0)  // If diameter is even
             {
@@ -95,7 +97,7 @@ namespace DrawToFourier.UI
                     int jEnd = Math.Min((int)(cX - rX + endX), w - 1);
 
                     for (int j = jStart; j <= jEnd; j++)
-                        arr[w * i + j] = 0x00FFFFFF;
+                        this._secondBuffer[(i + rY) * this._bmp.PixelWidth + rX + j] = 0x00FFFFFF;
                 }
             }
             else  // If diameter is odd
@@ -110,12 +112,9 @@ namespace DrawToFourier.UI
                     int jEnd = Math.Min((int)(cX - rX + endX), w - 1);
 
                     for (int j = jStart; j <= jEnd; j++)
-                        arr[w * i + j] = 0x00FFFFFF;
+                        this._secondBuffer[(i + rY) * this._bmp.PixelWidth + rX + j] = 0x00FFFFFF;
                 }
             }
-
-            rect.X = rect.Y = 0;
-            this._bmp.WritePixels(rect, arr, 4 * w, rX, rY);
         }
 
         // Draws a line with 3 pixel stroke on current bitmap between given points.

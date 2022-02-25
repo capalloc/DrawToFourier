@@ -155,6 +155,7 @@ namespace DrawToFourier
 
             this._resultWindow = new ResultWindow(this._imgHandlerResult);
             this._resultWindow.Show();
+            this._imgHandlerResult.Update();
         }
 
         private void AppStartupHandler(object sender, StartupEventArgs e)
@@ -167,6 +168,8 @@ namespace DrawToFourier
         {
             foreach (Line line in lines)
                 if (line.IsSolid) this._imgHandlerDraw.DrawLine(line.Start, line.End, defaultBrushSize);
+
+            this._imgHandlerDraw.Update();
         }
     }
 }
