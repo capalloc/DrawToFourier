@@ -43,6 +43,21 @@ namespace DrawToFourier.UI
             this._secondBuffer = new uint[this._bmp.PixelWidth * this._bmp.PixelHeight];
         }
 
+        public void DrawHollowCircle(Point circleCenter, int diameter, int brushSize)
+        {
+            double radius =  diameter / 2;
+            double unitAngle =  1 / radius;
+
+            Point prevPoint = new Point(circleCenter.X + radius, circleCenter.Y);
+
+            for (double t = unitAngle; t < 2 * Math.PI; t += unitAngle)
+            {
+                Point p = new Point(circleCenter.X + radius * Math.Cos(t), circleCenter.Y + radius * Math.Sin(t));
+                DrawLine(p, prevPoint, brushSize);
+                prevPoint = p;
+            }
+        }
+
         // Draws a circle at given poit with given diameter
         public void DrawSolidCircle(Point circleCenter, int diameter)
         {
