@@ -44,7 +44,7 @@ namespace DrawToFourier.UI
         }
 
         // Draws a circle at given poit with given diameter
-        public void DrawCircle(Point circleCenter, int diameter)
+        public void DrawSolidCircle(Point circleCenter, int diameter)
         {
             int w, h;
             h = w = diameter;
@@ -125,10 +125,9 @@ namespace DrawToFourier.UI
         // Draws a line with 3 pixel stroke on current bitmap between given points.
         // It does this by linearly interpolating points between given input points and draws a dot on each of them.
         // Returns the last drawn point (right now return value may not be correct)
-        public Point DrawLine(Point p1, Point p2, int brushSize)
+        public void DrawLine(Point p1, Point p2, int brushSize)
         {
             Vector pD = p2 - p1;
-            Point lastTarget = p1;
 
             if (Math.Abs(pD.X) >= Math.Abs(pD.Y))
             {
@@ -138,12 +137,7 @@ namespace DrawToFourier.UI
                     for (int x = (int)p1.X; x <= (int)p2.X; x++)
                     {
                         Point targetP = new Point((double)x, Linear(x, p1, p2));
-                        DrawCircle(targetP, brushSize);
-                        /*if (!DrawDot(targetP))
-                        {
-                            return lastTarget;
-                        }*/
-                        lastTarget = targetP;
+                        DrawSolidCircle(targetP, brushSize);
                     }
                 }
                 else
@@ -151,12 +145,7 @@ namespace DrawToFourier.UI
                     for (int x = (int)p2.X; x <= (int)p1.X; x++)
                     {
                         Point targetP = new Point((double)x, Linear(x, p1, p2));
-                        DrawCircle(targetP, brushSize);
-                        /*if (!DrawDot(targetP))
-                        {
-                            return lastTarget;
-                        }*/
-                        lastTarget = targetP;
+                        DrawSolidCircle(targetP, brushSize);
                     }
                 }
             }
@@ -170,12 +159,7 @@ namespace DrawToFourier.UI
                     for (int y = (int)p1.Y; y <= (int)p2.Y; y++)
                     {
                         Point targetP = new Point(Linear(y, tp1, tp2), (double)y);
-                        DrawCircle(targetP, brushSize);
-                        /*if (!DrawDot(targetP))
-                        {
-                            return lastTarget;
-                        }*/
-                        lastTarget = targetP;
+                        DrawSolidCircle(targetP, brushSize);
                     }
                 }
                 else
@@ -183,18 +167,10 @@ namespace DrawToFourier.UI
                     for (int y = (int)p2.Y; y <= (int)p1.Y; y++)
                     {
                         Point targetP = new Point(Linear(y, tp1, tp2), (double)y);
-                        DrawCircle(targetP, brushSize);
-                        /*if (!DrawDot(targetP))
-                        {
-                            return lastTarget;
-                        }*/
-                        lastTarget = targetP;
+                        DrawSolidCircle(targetP, brushSize);
                     }
                 }
             }
-
-            return lastTarget;
         }
-
     }
 }
