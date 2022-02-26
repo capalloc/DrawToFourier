@@ -30,12 +30,17 @@ namespace DrawToFourier.UI
         public ImageHandler(int width, int height)
         {
             this.Source = this._bmp = new WriteableBitmap(width, height, 96, 96, PixelFormats.Bgr32, null);
-            this._secondBuffer = new uint[width * height];
+            this._secondBuffer = new uint[this._bmp.PixelWidth * this._bmp.PixelHeight];
         }
 
         public void Update()
         {
             this._bmp.WritePixels(new Int32Rect(0, 0, this._bmp.PixelWidth, this._bmp.PixelHeight), this._secondBuffer, 4 * this._bmp.PixelWidth, 0);
+        }
+
+        public void Clear()
+        {
+            this._secondBuffer = new uint[this._bmp.PixelWidth * this._bmp.PixelHeight];
         }
 
         // Draws a circle at given poit with given diameter
