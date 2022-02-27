@@ -40,11 +40,11 @@ namespace DrawToFourier.UI
         private int _desiredDrawAreaWidth;
         private int _desiredDrawAreaHeight;
 
-        public ResultWindow(ImageSourceWrapper imageWrapper)
+        public ResultWindow(ImageSourceWrapper imageWrapper, int desiredDrawAreaWidth, int desiredDrawAreaHeight)
         {
             this._imageWrapper = imageWrapper;
-            this.DesiredDrawAreaWidth = (int)imageWrapper.Source.Width;
-            this.DesiredDrawAreaHeight = (int)imageWrapper.Source.Height;
+            this.DesiredDrawAreaWidth = desiredDrawAreaWidth;
+            this.DesiredDrawAreaHeight = desiredDrawAreaHeight;
             InitializeComponent();
         }
 

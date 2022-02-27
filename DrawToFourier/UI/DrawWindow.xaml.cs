@@ -57,17 +57,17 @@ namespace DrawToFourier.UI
         private double xScaleBack; 
         private double yScaleBack;
 
-        public DrawWindow(ImageSourceWrapper imageWrapper)
+        public DrawWindow(ImageSourceWrapper imageWrapper, int desiredDrawAreaWidth, int desiredDrawAreaHeight)
         {
             this._imageWrapper = imageWrapper;
-            this.DesiredDrawAreaWidth = (int) imageWrapper.Source.Width;
-            this.DesiredDrawAreaHeight = (int) imageWrapper.Source.Height;
+            this.DesiredDrawAreaWidth = desiredDrawAreaWidth;
+            this.DesiredDrawAreaHeight = desiredDrawAreaHeight;
             this.LoadButtonEnabled = false; // Temporarily disabled
             this.SaveButtonEnabled = false; // Temporarily disabled
             this.ResetButtonEnabled = true;
             this.SimulateButtonEnabled = true;
-            this.xScaleBack = 1;
-            this.yScaleBack = 1;
+            this.xScaleBack = this.ImageWrapper.Source.Width / desiredDrawAreaWidth;
+            this.yScaleBack = this.ImageWrapper.Source.Height / desiredDrawAreaHeight;
             InitializeComponent();
         }
 

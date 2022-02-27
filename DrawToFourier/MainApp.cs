@@ -15,8 +15,9 @@ namespace DrawToFourier
 {
     internal class MainApp : Application
     {
-        private static readonly int defaultBrushSize = 3;
-        private static readonly int defaultFourierCircleCount = 19;
+        private static readonly int defaultBrushSize = 6;
+        private static readonly int defaultFourierCircleCount = 20;
+        private static readonly double imageResolutionToActualRatio = 2.0;
 
         [STAThread]
         public static void Main(string[] args)
@@ -24,6 +25,9 @@ namespace DrawToFourier
             MainApp app = new MainApp();
             app.Run();
         }
+
+        private int _initialDrawAreaLength;
+        private int _initialImageLength;
 
         private DrawWindow _drawWindow;
         private ResultWindow _resultWindow;
@@ -37,11 +41,13 @@ namespace DrawToFourier
 
         public MainApp() : base()
         {
-            // Image size should be a square with length equal to the half of smaller side of the user screen
-            int length = Math.Min((int)(SystemParameters.PrimaryScreenWidth * 0.5), (int)(SystemParameters.PrimaryScreenHeight * 0.5));
+            // Initial draw area size should be a square with length equal to the half of smaller side of the user screen
+            this._initialDrawAreaLength = Math.Min((int)(SystemParameters.PrimaryScreenWidth * 0.5), (int)(SystemParameters.PrimaryScreenHeight * 0.5));
+            // Image size (resolution) should be 'imageResolutionToActualRatio' times the initial draw area
+            this._initialImageLength = (int)Math.Round(this._initialDrawAreaLength * imageResolutionToActualRatio);
 
-            this._imgHandlerDraw = new ImageHandler(length, length);
-            this._imgHandlerResult = new ImageHandler(length, length);
+            this._imgHandlerDraw = new ImageHandler(this._initialImageLength, this._initialImageLength);
+            this._imgHandlerResult = new ImageHandler(this._initialImageLength, this._initialImageLength);
             this._completedPaths = new LinkedList<Path>();
             this._fouriers = new LinkedList<FourierCore>();
             this.Startup += AppStartupHandler;
@@ -153,14 +159,14 @@ namespace DrawToFourier
             foreach (Path path in this._completedPaths)
                 this._fouriers.AddLast(new FourierCore(path, defaultFourierCircleCount));
 
-            this._resultWindow = new ResultWindow(this._imgHandlerResult);
+            this._resultWindow = new ResultWindow(this._imgHandlerResult, this._initialDrawAreaLength, this._initialDrawAreaLength);
             this._resultWindow.Show();
             this._imgHandlerResult.Update();
         }
 
         private void AppStartupHandler(object sender, StartupEventArgs e)
         {
-            this.MainWindow = this._drawWindow = new DrawWindow(this._imgHandlerDraw);
+            this.MainWindow = this._drawWindow = new DrawWindow(this._imgHandlerDraw, this._initialDrawAreaLength, this._initialDrawAreaLength);
             this.MainWindow.Show();
         }
 

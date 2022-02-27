@@ -15,10 +15,10 @@
         <cnv:MultiplyConverter x:Key="multiplyConverter" />
     </Window.Resources>
     <Window.MinWidth>
-        <Binding Path="ImageWrapper.Source.Width" Converter="{StaticResource multiplyConverter}" ConverterParameter="{StaticResource minWidthToScreenFactor}" />
+        <Binding Path="DesiredDrawAreaWidth" Converter="{StaticResource multiplyConverter}" ConverterParameter="{StaticResource minWidthToScreenFactor}" />
     </Window.MinWidth>
     <Window.MinHeight>
-        <Binding Path="ImageWrapper.Source.Height" Converter="{StaticResource multiplyConverter}" ConverterParameter="{StaticResource minHeightToScreenFactor}" />
+        <Binding Path="DesiredDrawAreaHeight" Converter="{StaticResource multiplyConverter}" ConverterParameter="{StaticResource minHeightToScreenFactor}" />
     </Window.MinHeight>
     <Grid SizeChanged="MainContainer_SizeChanged" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
         <Image Name="ResultImage"
