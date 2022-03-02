@@ -21,8 +21,18 @@
         <Binding Path="DesiredDrawAreaHeight" Converter="{StaticResource multiplyConverter}" ConverterParameter="{StaticResource minHeightToScreenFactor}" />
     </Window.MinHeight>
     <Grid SizeChanged="MainContainer_SizeChanged" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-        <Image Name="ResultImage"
-               Height="{Binding DesiredDrawAreaHeight}" Width="{Binding DesiredDrawAreaWidth}"
-               Source="{Binding Path=ImageWrapper.Source}"/>
+        <Rectangle Name="ResultImageContainer" 
+                           Width="{Binding DrawAreaHeight}" Height="{Binding DrawAreaHeight}" 
+                           Stretch="Uniform" 
+                           HorizontalAlignment="Center" 
+                           VerticalAlignment="Center">
+            <Rectangle.Fill>
+                <ImageBrush ImageSource="{Binding ImageWrapper.Source}" ViewportUnits="RelativeToBoundingBox" Stretch="Uniform">
+                    <ImageBrush.RelativeTransform>
+                        <ScaleTransform ScaleX="1" ScaleY="1" CenterX="0.5" CenterY="0.5" />
+                    </ImageBrush.RelativeTransform>
+                </ImageBrush>
+            </Rectangle.Fill>
+        </Rectangle>
     </Grid>
 </Window>

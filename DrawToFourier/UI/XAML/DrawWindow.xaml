@@ -24,7 +24,7 @@
     <Grid SizeChanged="MainContainer_SizeChanged" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
         <Grid>
             <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="{Binding DesiredDrawAreaHeight}"/>
                 <RowDefinition Height="{Binding DesiredDrawAreaHeight, Converter={StaticResource multiplyConverter}, ConverterParameter={StaticResource buttonMenuHeightFactor}}" />
             </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
@@ -34,15 +34,25 @@
                 <ColumnDefinition Width="1*" />
             </Grid.ColumnDefinitions>
 
-            <Image Name="DrawImage" 
-                   Grid.Row="0" 
-                   Grid.ColumnSpan="4" 
-                   Height="{Binding DesiredDrawAreaHeight}" Width="{Binding DesiredDrawAreaWidth}"
-                   Source="{Binding Path=ImageWrapper.Source}"
-                   MouseDown="DrawImage_MouseDown"
-                   MouseLeave="DrawImage_MouseLeave"
-                   MouseEnter="DrawImage_MouseEnter"
-                   MouseMove="DrawImage_MouseMove"/>
+            <Grid Grid.Row="0" Grid.ColumnSpan="4">
+                <Rectangle Name="DrawImageContainer" 
+                           Width="{Binding DrawAreaHeight}" Height="{Binding DrawAreaHeight}" 
+                           Stretch="Uniform" 
+                           HorizontalAlignment="Center" 
+                           VerticalAlignment="Center"
+                           MouseDown="DrawImage_MouseDown"
+                           MouseLeave="DrawImage_MouseLeave"
+                           MouseEnter="DrawImage_MouseEnter"
+                           MouseMove="DrawImage_MouseMove">
+                    <Rectangle.Fill>
+                        <ImageBrush ImageSource="{Binding ImageWrapper.Source}" ViewportUnits="RelativeToBoundingBox" Stretch="Uniform">
+                            <ImageBrush.RelativeTransform>
+                                <ScaleTransform ScaleX="1" ScaleY="1" CenterX="0.5" CenterY="0.5" />
+                            </ImageBrush.RelativeTransform>
+                        </ImageBrush>
+                    </Rectangle.Fill>
+                </Rectangle>
+            </Grid>
 
             <Button Grid.Row="1" Grid.Column="0" Margin="5,5,5,5" Content="Load" Click="LoadButton_Click" IsEnabled="{Binding LoadButtonEnabled}" />
             <Button Grid.Row="1" Grid.Column="1" Margin="5,5,5,5" Content="Save" Click="SaveButton_Click" IsEnabled="{Binding SaveButtonEnabled}" />

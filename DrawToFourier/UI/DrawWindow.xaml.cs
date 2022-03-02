@@ -39,6 +39,18 @@ namespace DrawToFourier.UI
             set { this._desiredDrawAreaHeight = value; OnPropertyChanged("DesiredDrawAreaHeight"); } 
         }
 
+        // Normal size properties represent the actual target draw area size based on current window size
+        public int DrawAreaWidth
+        { 
+            get { return this._drawAreaWidth; } 
+            set { this._drawAreaWidth = value; OnPropertyChanged("DrawAreaWidth"); } 
+        }
+        public int DrawAreaHeight 
+        { 
+            get { return this._drawAreaHeight; } 
+            set { this._drawAreaHeight = value; OnPropertyChanged("DrawAreaHeight"); } 
+        }
+
         public bool LoadButtonEnabled { get { return this._loadButtonEnabled; } set { this._loadButtonEnabled = value; OnPropertyChanged("LoadButtonEnabled"); } }
         public bool SaveButtonEnabled { get { return this._saveButtonEnabled; } set { this._saveButtonEnabled = value; OnPropertyChanged("SaveButtonEnabled"); } }
         public bool ResetButtonEnabled { get { return this._resetButtonEnabled; } set { this._resetButtonEnabled = value; OnPropertyChanged("ResetButtonEnabled"); } }
@@ -47,6 +59,8 @@ namespace DrawToFourier.UI
         private ImageSourceWrapper _imageWrapper;
         private int _desiredDrawAreaWidth;
         private int _desiredDrawAreaHeight;
+        private int _drawAreaWidth;
+        private int _drawAreaHeight;
 
         private bool _loadButtonEnabled;
         private bool _saveButtonEnabled;
@@ -60,14 +74,14 @@ namespace DrawToFourier.UI
         public DrawWindow(ImageSourceWrapper imageWrapper, int desiredDrawAreaWidth, int desiredDrawAreaHeight)
         {
             this._imageWrapper = imageWrapper;
-            this.DesiredDrawAreaWidth = desiredDrawAreaWidth;
-            this.DesiredDrawAreaHeight = desiredDrawAreaHeight;
+            this.DesiredDrawAreaWidth = desiredDrawAreaWidth; this.DesiredDrawAreaHeight = desiredDrawAreaHeight;
+            this.DrawAreaWidth = this.DrawAreaHeight = Math.Min(desiredDrawAreaHeight, desiredDrawAreaWidth);
             this.LoadButtonEnabled = false; // Temporarily disabled
             this.SaveButtonEnabled = false; // Temporarily disabled
             this.ResetButtonEnabled = true;
             this.SimulateButtonEnabled = true;
-            this.xScaleBack = this.ImageWrapper.Source.Width / desiredDrawAreaWidth;
-            this.yScaleBack = this.ImageWrapper.Source.Height / desiredDrawAreaHeight;
+            this.xScaleBack = this.ImageWrapper.Source.Width / this.DrawAreaWidth;
+            this.yScaleBack = this.ImageWrapper.Source.Height / this.DrawAreaHeight;
             InitializeComponent();
         }
 
@@ -77,31 +91,29 @@ namespace DrawToFourier.UI
         {
             this.DesiredDrawAreaWidth = (int)e.NewSize.Width;
             this.DesiredDrawAreaHeight = (int)(e.NewSize.Height / (1 + (double)this.Resources["buttonMenuHeightFactor"]));
-            // Scaleback variables are set asynchronously with a low priority because to calculate them correctly, render thread must update first
-            this.Dispatcher.InvokeAsync(() => {
-                this.xScaleBack = this.ImageWrapper.Source.Width / this.DrawImage.ActualWidth;
-                this.yScaleBack = this.ImageWrapper.Source.Height / this.DrawImage.ActualHeight;
-            }, System.Windows.Threading.DispatcherPriority.Background);
+            this.DrawAreaWidth = this.DrawAreaHeight = Math.Min(this.DesiredDrawAreaHeight, this.DesiredDrawAreaWidth);
+            this.xScaleBack = this.ImageWrapper.Source.Width / this.DrawAreaWidth;
+            this.yScaleBack = this.ImageWrapper.Source.Height / this.DrawAreaHeight;
         }
 
         private void DrawImage_MouseDown(object sender, MouseButtonEventArgs e)
         {
-            ((MainApp)Application.Current).OnMouseDown(e.GetPosition(this.DrawImage).X * xScaleBack, e.GetPosition(this.DrawImage).Y * yScaleBack, e.ChangedButton);
+            ((MainApp)Application.Current).OnMouseDown(e.GetPosition(this.DrawImageContainer).X * xScaleBack, e.GetPosition(this.DrawImageContainer).Y * yScaleBack, e.ChangedButton);
         }
 
         private void DrawImage_MouseLeave(object sender, MouseEventArgs e)
         {
-            ((MainApp)Application.Current).OnMouseLeave(e.GetPosition(this.DrawImage).X * xScaleBack, e.GetPosition(this.DrawImage).Y * yScaleBack);
+            ((MainApp)Application.Current).OnMouseLeave(e.GetPosition(this.DrawImageContainer).X * xScaleBack, e.GetPosition(this.DrawImageContainer).Y * yScaleBack);
         }
 
         private void DrawImage_MouseEnter(object sender, MouseEventArgs e)
         {
-            ((MainApp)Application.Current).OnMouseEnter(e.GetPosition(this.DrawImage).X * xScaleBack, e.GetPosition(this.DrawImage).Y * yScaleBack);
+            ((MainApp)Application.Current).OnMouseEnter(e.GetPosition(this.DrawImageContainer).X * xScaleBack, e.GetPosition(this.DrawImageContainer).Y * yScaleBack);
         }
 
         private void DrawImage_MouseMove(object sender, MouseEventArgs e)
         {
-            ((MainApp)Application.Current).OnMouseMove(e.GetPosition(this.DrawImage).X * xScaleBack, e.GetPosition(this.DrawImage).Y * yScaleBack);
+            ((MainApp)Application.Current).OnMouseMove(e.GetPosition(this.DrawImageContainer).X * xScaleBack, e.GetPosition(this.DrawImageContainer).Y * yScaleBack);
         }
 
         private void LoadButton_Click(object sender, RoutedEventArgs e)

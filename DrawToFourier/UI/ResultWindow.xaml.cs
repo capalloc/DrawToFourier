@@ -36,15 +36,30 @@ namespace DrawToFourier.UI
             set { this._desiredDrawAreaHeight = value; OnPropertyChanged("DesiredDrawAreaHeight"); }
         }
 
+        // Normal size properties represent the actual target draw area size based on current window size
+        public int DrawAreaWidth
+        {
+            get { return this._drawAreaWidth; }
+            set { this._drawAreaWidth = value; OnPropertyChanged("DrawAreaWidth"); }
+        }
+        public int DrawAreaHeight
+        {
+            get { return this._drawAreaHeight; }
+            set { this._drawAreaHeight = value; OnPropertyChanged("DrawAreaHeight"); }
+        }
+
         private ImageSourceWrapper _imageWrapper;
         private int _desiredDrawAreaWidth;
         private int _desiredDrawAreaHeight;
+        private int _drawAreaWidth;
+        private int _drawAreaHeight;
 
         public ResultWindow(ImageSourceWrapper imageWrapper, int desiredDrawAreaWidth, int desiredDrawAreaHeight)
         {
             this._imageWrapper = imageWrapper;
             this.DesiredDrawAreaWidth = desiredDrawAreaWidth;
             this.DesiredDrawAreaHeight = desiredDrawAreaHeight;
+            this.DrawAreaWidth = this.DrawAreaHeight = Math.Min(desiredDrawAreaHeight, desiredDrawAreaWidth);
             InitializeComponent();
         }
 
@@ -52,6 +67,7 @@ namespace DrawToFourier.UI
         {
             this.DesiredDrawAreaWidth = (int)e.NewSize.Width;
             this.DesiredDrawAreaHeight = (int)(e.NewSize.Height);
+            this.DrawAreaWidth = this.DrawAreaHeight = Math.Min(this.DesiredDrawAreaHeight, this.DesiredDrawAreaWidth);
         }
 
         private void OnPropertyChanged(string property)
