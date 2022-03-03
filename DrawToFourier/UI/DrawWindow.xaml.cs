@@ -17,38 +17,24 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using static DrawToFourier.Fourier.FourierCore;
 
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+
 namespace DrawToFourier.UI
 {
     public partial class DrawWindow : Window, INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler? PropertyChanged;
-
-        public ImageSourceWrapper ImageWrapper { 
-            get { return this._imageWrapper; } 
+        
+        public ImageSourceWrapper ImageSourceWrapper 
+        { 
+            get { return this._imageSourceWrapper; } 
+            set { this._imageSourceWrapper = value; OnPropertyChanged("ImageSourceWrapper"); }
         }
 
-        // Desired size properties represent the target draw area size based on current window size
-        public int DesiredDrawAreaWidth
-        { 
-            get { return this._desiredDrawAreaWidth; } 
-            set { this._desiredDrawAreaWidth = value; OnPropertyChanged("DesiredDrawAreaWidth"); } 
-        }
-        public int DesiredDrawAreaHeight 
-        { 
-            get { return this._desiredDrawAreaHeight; } 
-            set { this._desiredDrawAreaHeight = value; OnPropertyChanged("DesiredDrawAreaHeight"); } 
-        }
-
-        // Normal size properties represent the actual target draw area size based on current window size
-        public int DrawAreaWidth
-        { 
-            get { return this._drawAreaWidth; } 
-            set { this._drawAreaWidth = value; OnPropertyChanged("DrawAreaWidth"); } 
-        }
-        public int DrawAreaHeight 
-        { 
-            get { return this._drawAreaHeight; } 
-            set { this._drawAreaHeight = value; OnPropertyChanged("DrawAreaHeight"); } 
+        public DrawAreaSize DrawAreaSize
+        {
+            get { return this._drawAreaSize; }
+            set { this._drawAreaSize = value; OnPropertyChanged("DrawAreaSize"); }
         }
 
         public bool LoadButtonEnabled { get { return this._loadButtonEnabled; } set { this._loadButtonEnabled = value; OnPropertyChanged("LoadButtonEnabled"); } }
@@ -56,11 +42,8 @@ namespace DrawToFourier.UI
         public bool ResetButtonEnabled { get { return this._resetButtonEnabled; } set { this._resetButtonEnabled = value; OnPropertyChanged("ResetButtonEnabled"); } }
         public bool SimulateButtonEnabled { get { return this._simulateButtonEnabled; } set { this._simulateButtonEnabled = value; OnPropertyChanged("SimulateButtonEnabled"); } }
 
-        private ImageSourceWrapper _imageWrapper;
-        private int _desiredDrawAreaWidth;
-        private int _desiredDrawAreaHeight;
-        private int _drawAreaWidth;
-        private int _drawAreaHeight;
+        private ImageSourceWrapper _imageSourceWrapper;
+        private DrawAreaSize _drawAreaSize;
 
         private bool _loadButtonEnabled;
         private bool _saveButtonEnabled;
@@ -71,17 +54,17 @@ namespace DrawToFourier.UI
         private double xScaleBack; 
         private double yScaleBack;
 
-        public DrawWindow(ImageSourceWrapper imageWrapper, int desiredDrawAreaWidth, int desiredDrawAreaHeight)
+
+        public DrawWindow(ImageSourceWrapper imageSourceWrapper, int desiredDrawAreaWidth, int desiredDrawAreaHeight)
         {
-            this._imageWrapper = imageWrapper;
-            this.DesiredDrawAreaWidth = desiredDrawAreaWidth; this.DesiredDrawAreaHeight = desiredDrawAreaHeight;
-            this.DrawAreaWidth = this.DrawAreaHeight = Math.Min(desiredDrawAreaHeight, desiredDrawAreaWidth);
+            this.ImageSourceWrapper = imageSourceWrapper;
+            this.DrawAreaSize = new DrawAreaSize(desiredDrawAreaWidth, desiredDrawAreaHeight);
+            this.xScaleBack = this.ImageSourceWrapper.Source.Width / this.DrawAreaSize.Width;
+            this.yScaleBack = this.ImageSourceWrapper.Source.Height / this.DrawAreaSize.Height;
             this.LoadButtonEnabled = false; // Temporarily disabled
             this.SaveButtonEnabled = false; // Temporarily disabled
             this.ResetButtonEnabled = true;
             this.SimulateButtonEnabled = true;
-            this.xScaleBack = this.ImageWrapper.Source.Width / this.DrawAreaWidth;
-            this.yScaleBack = this.ImageWrapper.Source.Height / this.DrawAreaHeight;
             InitializeComponent();
         }
 
@@ -89,11 +72,10 @@ namespace DrawToFourier.UI
         // proportions given as a window resource 'buttonMenuHeightFactor'.
         private void MainContainer_SizeChanged(object sender, SizeChangedEventArgs e)
         {
-            this.DesiredDrawAreaWidth = (int)e.NewSize.Width;
-            this.DesiredDrawAreaHeight = (int)(e.NewSize.Height / (1 + (double)this.Resources["buttonMenuHeightFactor"]));
-            this.DrawAreaWidth = this.DrawAreaHeight = Math.Min(this.DesiredDrawAreaHeight, this.DesiredDrawAreaWidth);
-            this.xScaleBack = this.ImageWrapper.Source.Width / this.DrawAreaWidth;
-            this.yScaleBack = this.ImageWrapper.Source.Height / this.DrawAreaHeight;
+            this.DrawAreaSize.NewSize((int)e.NewSize.Width, (int)(e.NewSize.Height / (1 + (double)this.Resources["buttonMenuHeightToDrawAreaFactor"])));
+            this.xScaleBack = this.ImageSourceWrapper.Source.Width / this.DrawAreaSize.Width;
+            this.yScaleBack = this.ImageSourceWrapper.Source.Height / this.DrawAreaSize.Height;
+            OnPropertyChanged("DrawAreaSize");
         }
 
         private void DrawImage_MouseDown(object sender, MouseButtonEventArgs e)
