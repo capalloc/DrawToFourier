@@ -17,7 +17,7 @@ namespace DrawToFourier
     {
         private static readonly int defaultBrushSize = 6;
         private static readonly int defaultFourierCircleCount = 20;
-        private static readonly double imageResolutionToActualRatio = 2.0;
+        private static readonly double imageResolutionToActualRatio = 5.0;
 
         [STAThread]
         public static void Main(string[] args)
