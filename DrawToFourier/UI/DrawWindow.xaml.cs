@@ -49,32 +49,38 @@ namespace DrawToFourier.UI
         private double _zoomTranslateX;
         private double _zoomTranslateY;
 
+        private double _screenOriginX;
+        private double _screenOriginY;
+        private double _screenEndX;
+        private double _screenEndY;
+
         private bool _loadButtonEnabled;
         private bool _saveButtonEnabled;
         private bool _resetButtonEnabled;
         private bool _simulateButtonEnabled;
 
-        // Scaleback variables are used to translate draw area coordinates to image coordinates
-        private double xScaleBack; 
-        private double yScaleBack;
-
-
         public DrawWindow(ImageSourceWrapper imageSourceWrapper, int desiredDrawAreaWidth, int desiredDrawAreaHeight)
         {
             this.ImageSourceWrapper = imageSourceWrapper;
             this.DrawAreaSize = new DrawAreaSize(desiredDrawAreaWidth, desiredDrawAreaHeight);
+
             this.ZoomScale = 1;
             this._zoomMultiplier = 1.1;
             this.ZoomCenterX = 0.5;
             this.ZoomCenterY = 0.5;
             this.ZoomTranslateX = 0;
             this.ZoomTranslateY = 0;
-            this.xScaleBack = this.ImageSourceWrapper.Source.Width / this.DrawAreaSize.Width;
-            this.yScaleBack = this.ImageSourceWrapper.Source.Height / this.DrawAreaSize.Height;
+
+            this._screenOriginX = 0;
+            this._screenOriginY = 0;
+            this._screenEndX = 1;
+            this._screenEndY = 1;
+
             this.LoadButtonEnabled = false; // Temporarily disabled
             this.SaveButtonEnabled = false; // Temporarily disabled
             this.ResetButtonEnabled = true;
             this.SimulateButtonEnabled = true;
+
             InitializeComponent();
         }
 
@@ -83,8 +89,6 @@ namespace DrawToFourier.UI
         private void MainContainer_SizeChanged(object sender, SizeChangedEventArgs e)
         {
             this.DrawAreaSize.NewSize((int)e.NewSize.Width, (int)(e.NewSize.Height / (1 + (double)this.Resources["buttonMenuHeightToDrawAreaFactor"])));
-            this.xScaleBack = this.ImageSourceWrapper.Source.Width / this.DrawAreaSize.Width;
-            this.yScaleBack = this.ImageSourceWrapper.Source.Height / this.DrawAreaSize.Height;
             OnPropertyChanged("DrawAreaSize");
         }
 
@@ -99,6 +103,11 @@ namespace DrawToFourier.UI
                 this.ZoomCenterY = 0.5;
                 this.ZoomTranslateX = 0;
                 this.ZoomTranslateY = 0;
+                this._screenOriginX = 0;
+                this._screenOriginY = 0;
+                this._screenEndX = 1;
+                this._screenEndY = 1;
+                return;
             }
             else if (e.Delta < 0)
             {
@@ -118,35 +127,66 @@ namespace DrawToFourier.UI
             this.ZoomCenterX = centerLocalX - this.ZoomTranslateX;
             this.ZoomCenterY = centerLocalY - this.ZoomTranslateY;
 
-            double screenOriginX = this.ZoomCenterX - centerLocalX / this.ZoomScale;
-            double screenOriginY = this.ZoomCenterY - centerLocalY / this.ZoomScale;
-            double screenEndX = screenOriginX + 1 / this.ZoomScale;
-            double screenEndY = screenOriginY + 1 / this.ZoomScale;
+            this._screenOriginX = this.ZoomCenterX - centerLocalX / this.ZoomScale;
+            this._screenOriginY = this.ZoomCenterY - centerLocalY / this.ZoomScale;
+            this._screenEndX = this._screenOriginX + 1 / this.ZoomScale;
+            this._screenEndY = this._screenOriginY + 1 / this.ZoomScale;
 
-            if (screenOriginX < 0) ZoomTranslateX += screenOriginX * this.ZoomScale;
-            if (screenOriginY < 0) ZoomTranslateY += screenOriginY * this.ZoomScale;
-            if (screenEndX > 1) ZoomTranslateX += (screenEndX - 1) * this.ZoomScale;
-            if (screenEndY > 1) ZoomTranslateY += (screenEndY - 1) * this.ZoomScale;
+            double totalChangeToScreenX = 0;
+            double totalChangeToScreenY = 0;
+
+            if (this._screenOriginX < 0) 
+            {
+                totalChangeToScreenX -= this._screenOriginX;
+            }
+            if (this._screenOriginY < 0)
+            {
+                totalChangeToScreenY -= this._screenOriginY;
+            }
+            if (this._screenEndX + totalChangeToScreenX > 1)
+            {
+                totalChangeToScreenX -= this._screenEndX + totalChangeToScreenX - 1;
+            }
+            if (this._screenEndY + totalChangeToScreenY > 1) 
+            {
+                totalChangeToScreenY -= this._screenEndY + totalChangeToScreenY - 1;
+            }
+
+            ZoomTranslateX -= totalChangeToScreenX * this.ZoomScale;
+            ZoomTranslateY -= totalChangeToScreenY * this.ZoomScale;
+            this._screenOriginX += totalChangeToScreenX;
+            this._screenOriginY += totalChangeToScreenY;
+            this._screenEndX += totalChangeToScreenX;
+            this._screenEndY += totalChangeToScreenY;
         }
 
         private void DrawImage_MouseDown(object sender, MouseButtonEventArgs e)
         {
-            ((MainApp)Application.Current).OnMouseDown(e.GetPosition(this.DrawImageContainer).X * xScaleBack, e.GetPosition(this.DrawImageContainer).Y * yScaleBack, e.ChangedButton);
+            ((MainApp)Application.Current).OnMouseDown(
+                this._imageSourceWrapper.Source.Width * (this._screenOriginX + (this._screenEndX - this._screenOriginX) * e.GetPosition(this.DrawImageContainer).X / this.DrawAreaSize.Width),
+                this._imageSourceWrapper.Source.Height * (this._screenOriginY + (this._screenEndY - this._screenOriginY) * e.GetPosition(this.DrawImageContainer).Y / this.DrawAreaSize.Height),
+                e.ChangedButton);
         }
 
         private void DrawImage_MouseLeave(object sender, MouseEventArgs e)
         {
-            ((MainApp)Application.Current).OnMouseLeave(e.GetPosition(this.DrawImageContainer).X * xScaleBack, e.GetPosition(this.DrawImageContainer).Y * yScaleBack);
+            ((MainApp)Application.Current).OnMouseLeave(
+                this._imageSourceWrapper.Source.Width * (this._screenOriginX + (this._screenEndX - this._screenOriginX) * e.GetPosition(this.DrawImageContainer).X / this.DrawAreaSize.Width),
+                this._imageSourceWrapper.Source.Height * (this._screenOriginY + (this._screenEndY - this._screenOriginY) * e.GetPosition(this.DrawImageContainer).Y / this.DrawAreaSize.Height));
         }
 
         private void DrawImage_MouseEnter(object sender, MouseEventArgs e)
         {
-            ((MainApp)Application.Current).OnMouseEnter(e.GetPosition(this.DrawImageContainer).X * xScaleBack, e.GetPosition(this.DrawImageContainer).Y * yScaleBack);
+            ((MainApp)Application.Current).OnMouseEnter(
+                this._imageSourceWrapper.Source.Width * (this._screenOriginX + (this._screenEndX - this._screenOriginX) * e.GetPosition(this.DrawImageContainer).X / this.DrawAreaSize.Width),
+                this._imageSourceWrapper.Source.Height * (this._screenOriginY + (this._screenEndY - this._screenOriginY) * e.GetPosition(this.DrawImageContainer).Y / this.DrawAreaSize.Height));
         }
 
         private void DrawImage_MouseMove(object sender, MouseEventArgs e)
         {
-            ((MainApp)Application.Current).OnMouseMove(e.GetPosition(this.DrawImageContainer).X * xScaleBack, e.GetPosition(this.DrawImageContainer).Y * yScaleBack);
+            ((MainApp)Application.Current).OnMouseMove(
+                this._imageSourceWrapper.Source.Width * (this._screenOriginX + (this._screenEndX - this._screenOriginX) * e.GetPosition(this.DrawImageContainer).X / this.DrawAreaSize.Width),
+                this._imageSourceWrapper.Source.Height * (this._screenOriginY + (this._screenEndY - this._screenOriginY) * e.GetPosition(this.DrawImageContainer).Y / this.DrawAreaSize.Height));
         }
 
         private void LoadButton_Click(object sender, RoutedEventArgs e)
