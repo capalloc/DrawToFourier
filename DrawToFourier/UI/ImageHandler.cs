@@ -26,11 +26,13 @@ namespace DrawToFourier.UI
 
         private WriteableBitmap _bmp;
         private uint[] _secondBuffer;
+        private uint _brushColor;
 
         public ImageHandler(int width, int height)
         {
             this.Source = this._bmp = new WriteableBitmap(width, height, 96, 96, PixelFormats.Bgr32, null);
             this._secondBuffer = new uint[this._bmp.PixelWidth * this._bmp.PixelHeight];
+            this._brushColor = 0x00FFFFFF;
         }
 
         public void Update()
@@ -41,6 +43,11 @@ namespace DrawToFourier.UI
         public void Clear()
         {
             this._secondBuffer = new uint[this._bmp.PixelWidth * this._bmp.PixelHeight];
+        }
+
+        public void ChangeBrushColor(int r, int g, int b)
+        {
+            this._brushColor = (uint)((r << 16) | (g << 8) | b);
         }
 
         public void DrawHollowCircle(Point circleCenter, int diameter, int brushSize)
@@ -117,7 +124,7 @@ namespace DrawToFourier.UI
                     int jEnd = Math.Min((int)(cX - rX + endX), w - 1);
 
                     for (int j = jStart; j <= jEnd; j++)
-                        this._secondBuffer[(i + rY) * this._bmp.PixelWidth + rX + j] = 0x00FFFFFF;
+                        this._secondBuffer[(i + rY) * this._bmp.PixelWidth + rX + j] = this._brushColor;
                 }
             }
             else  // If diameter is odd
@@ -132,7 +139,7 @@ namespace DrawToFourier.UI
                     int jEnd = Math.Min((int)(cX - rX + endX), w - 1);
 
                     for (int j = jStart; j <= jEnd; j++)
-                        this._secondBuffer[(i + rY) * this._bmp.PixelWidth + rX + j] = 0x00FFFFFF;
+                        this._secondBuffer[(i + rY) * this._bmp.PixelWidth + rX + j] = this._brushColor;
                 }
             }
         }
