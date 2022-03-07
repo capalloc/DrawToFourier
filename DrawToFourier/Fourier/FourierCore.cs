@@ -46,7 +46,20 @@ namespace DrawToFourier.Fourier
 
         public FourierCore(Path path, int circleCount)
         {
-            this.circles = new SortedList<double, FCircle>(Comparer<double>.Create((x, y) => y.CompareTo(x)));
+            // Sort circles by their frequency
+            this.circles = new SortedList<double, FCircle>(Comparer<double>.Create((x, y) => {
+                double xa = Math.Abs(x);
+                double ya = Math.Abs(y);
+                
+                if (xa != ya)
+                {
+                    return xa.CompareTo(ya);
+                } 
+                else
+                {
+                    return x.CompareTo(y);
+                }
+            }));
 
             double[] realCoeff = new double[circleCount];
             double[] imgCoeff = new double[circleCount];
@@ -119,7 +132,7 @@ namespace DrawToFourier.Fourier
                 if (k == 0)
                     this.baseCircle = newCircle;
                 else
-                    this.circles.Add(newCircle.Radius, newCircle);
+                    this.circles.Add(newCircle.Degree, newCircle);
             }
         }
     }
