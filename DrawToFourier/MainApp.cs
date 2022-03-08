@@ -46,8 +46,8 @@ namespace DrawToFourier
             // Image size (resolution) should be 'imageResolutionToActualRatio' times the initial draw area
             this._initialImageLength = (int)Math.Round(this._initialDrawAreaLength * imageResolutionToActualRatio);
 
-            this._imgHandlerDraw = new ImageHandler(this._initialImageLength, this._initialImageLength);
-            this._imgHandlerResult = new ImageHandler(this._initialImageLength, this._initialImageLength);
+            this._imgHandlerDraw = new ImageHandler(this._initialImageLength, this._initialImageLength, 1);
+            this._imgHandlerResult = new ImageHandler(this._initialImageLength, this._initialImageLength, 2);
             this._completedPaths = new LinkedList<Path>();
             this._fouriers = new LinkedList<FourierCore>();
             this.Startup += AppStartupHandler;

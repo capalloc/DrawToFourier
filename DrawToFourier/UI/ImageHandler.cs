@@ -25,29 +25,40 @@ namespace DrawToFourier.UI
         }
 
         private WriteableBitmap _bmp;
-        private uint[] _secondBuffer;
+        private uint[][] _layerBuffers; // Layer 0 is the composed buffer which is fed to the backbuffer
         private uint _brushColor;
+        private int _activeLayer; // Null for directly writing to composed buffer
 
-        public ImageHandler(int width, int height)
+        public ImageHandler(int width, int height, int maxLayerCount)
         {
             this.Source = this._bmp = new WriteableBitmap(width, height, 96, 96, PixelFormats.Bgr32, null);
-            this._secondBuffer = new uint[this._bmp.PixelWidth * this._bmp.PixelHeight];
+            this._layerBuffers = new uint[maxLayerCount][];
+            this._layerBuffers[0] = new uint[this._bmp.PixelWidth * this._bmp.PixelHeight];
+            this._activeLayer = 0;
             this._brushColor = 0x00FFFFFF;
         }
 
         public void Update()
         {
-            this._bmp.WritePixels(new Int32Rect(0, 0, this._bmp.PixelWidth, this._bmp.PixelHeight), this._secondBuffer, 4 * this._bmp.PixelWidth, 0);
+            this._bmp.WritePixels(new Int32Rect(0, 0, this._bmp.PixelWidth, this._bmp.PixelHeight), this._layerBuffers[0], 4 * this._bmp.PixelWidth, 0);
         }
 
         public void Clear()
         {
-            this._secondBuffer = new uint[this._bmp.PixelWidth * this._bmp.PixelHeight];
+            this._layerBuffers[this._activeLayer] = new uint[this._bmp.PixelWidth * this._bmp.PixelHeight];
         }
 
         public void ChangeBrushColor(int r, int g, int b)
         {
             this._brushColor = (uint)((r << 16) | (g << 8) | b);
+        }
+
+        public void ChangeActiveLayer(int newActiveLayer)
+        {
+            this._activeLayer = newActiveLayer;
+
+            if(this._layerBuffers[newActiveLayer] == null)
+                this._layerBuffers[newActiveLayer] = new uint[this._bmp.PixelWidth * this._bmp.PixelHeight];
         }
 
         public void DrawHollowCircle(Point circleCenter, int diameter, int brushSize)
@@ -124,7 +135,7 @@ namespace DrawToFourier.UI
                     int jEnd = Math.Min((int)(cX - rX + endX), w - 1);
 
                     for (int j = jStart; j <= jEnd; j++)
-                        this._secondBuffer[(i + rY) * this._bmp.PixelWidth + rX + j] = this._brushColor;
+                        this._layerBuffers[this._activeLayer][(i + rY) * this._bmp.PixelWidth + rX + j] = this._brushColor;
                 }
             }
             else  // If diameter is odd
@@ -139,7 +150,7 @@ namespace DrawToFourier.UI
                     int jEnd = Math.Min((int)(cX - rX + endX), w - 1);
 
                     for (int j = jStart; j <= jEnd; j++)
-                        this._secondBuffer[(i + rY) * this._bmp.PixelWidth + rX + j] = this._brushColor;
+                        this._layerBuffers[this._activeLayer][(i + rY) * this._bmp.PixelWidth + rX + j] = this._brushColor;
                 }
             }
         }
