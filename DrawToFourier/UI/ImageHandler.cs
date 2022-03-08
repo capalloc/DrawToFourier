@@ -28,6 +28,7 @@ namespace DrawToFourier.UI
         private uint[][] _layerBuffers; // Layer 0 is the composed buffer which is fed to the backbuffer
         private uint _brushColor;
         private int _activeLayer; // Null for directly writing to composed buffer
+        private PriorityQueue<Action, int> _deferredJobs;
 
         public ImageHandler(int width, int height, int maxLayerCount)
         {
@@ -35,6 +36,7 @@ namespace DrawToFourier.UI
             this._layerBuffers = new uint[maxLayerCount][];
             this._layerBuffers[0] = new uint[this._bmp.PixelWidth * this._bmp.PixelHeight];
             this._activeLayer = 0;
+            this._deferredJobs = new PriorityQueue<Action, int>();
             this._brushColor = 0x00FFFFFF;
         }
 
@@ -46,6 +48,18 @@ namespace DrawToFourier.UI
         public void Clear()
         {
             this._layerBuffers[this._activeLayer] = new uint[this._bmp.PixelWidth * this._bmp.PixelHeight];
+        }
+        
+        public void ApplyDeferredJobs()
+        {
+            uint oldBrushColor = this._brushColor;
+            int oldLayer = this._activeLayer;
+
+            while (this._deferredJobs.Count > 0)
+                this._deferredJobs.Dequeue().Invoke();
+
+            this._brushColor = oldBrushColor;
+            this._activeLayer = oldLayer;
         }
 
         public void ChangeBrushColor(int r, int g, int b)
@@ -204,6 +218,39 @@ namespace DrawToFourier.UI
                     }
                 }
             }
+        }
+
+        public void DeferredDrawHollowCircle(int priority, Point circleCenter, int diameter, int brushSize)
+        {
+            uint oldBrushColor = this._brushColor;
+            int oldLayer = this._activeLayer;
+            this._deferredJobs.Enqueue( new Action(() => {
+                this._brushColor = oldBrushColor;
+                this._activeLayer = oldLayer;
+                DrawHollowCircle(circleCenter, diameter, brushSize); 
+            }), priority);
+        }
+
+        public void DeferredDrawSolidCircle(int priority, Point circleCenter, int diameter)
+        {
+            uint oldBrushColor = this._brushColor;
+            int oldLayer = this._activeLayer;
+            this._deferredJobs.Enqueue(new Action(() => {
+                this._brushColor = oldBrushColor;
+                this._activeLayer = oldLayer;
+                DrawSolidCircle(circleCenter, diameter);
+            }), priority);
+        }
+
+        public void DeferredDrawLine(int priority, Point p1, Point p2, int brushSize)
+        {
+            uint oldBrushColor = this._brushColor;
+            int oldLayer = this._activeLayer;
+            this._deferredJobs.Enqueue(new Action(() => {
+                this._brushColor = oldBrushColor;
+                this._activeLayer = oldLayer;
+                DrawLine(p1, p2, brushSize); 
+            }), priority);
         }
     }
 }
