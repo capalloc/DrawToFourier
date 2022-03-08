@@ -37,7 +37,22 @@ namespace DrawToFourier.UI
             this._layerBuffers[0] = new uint[this._bmp.PixelWidth * this._bmp.PixelHeight];
             this._activeLayer = 0;
             this._deferredJobs = new PriorityQueue<Action, int>();
-            this._brushColor = 0x00FFFFFF;
+            this._brushColor = 0xFFFFFFFF;
+
+            for (int i = 0; i < this._layerBuffers[0].Length; i++)
+                this._layerBuffers[0][i] = 0xFF000000;
+        }
+
+        public void Reset()
+        {
+            this._layerBuffers = new uint[this._layerBuffers.Length][];
+            this._layerBuffers[0] = new uint[this._bmp.PixelWidth * this._bmp.PixelHeight];
+            this._activeLayer = 0;
+            this._deferredJobs = new PriorityQueue<Action, int>();
+            this._brushColor = 0xFFFFFFFF;
+
+            for (int i = 0; i < this._layerBuffers[0].Length; i++)
+                this._layerBuffers[0][i] = 0xFF000000;
         }
 
         public void Update()
@@ -45,11 +60,47 @@ namespace DrawToFourier.UI
             this._bmp.WritePixels(new Int32Rect(0, 0, this._bmp.PixelWidth, this._bmp.PixelHeight), this._layerBuffers[0], 4 * this._bmp.PixelWidth, 0);
         }
 
-        public void Clear()
+        public void Compose()
         {
-            this._layerBuffers[this._activeLayer] = new uint[this._bmp.PixelWidth * this._bmp.PixelHeight];
+            int length = this._bmp.PixelWidth * this._bmp.PixelHeight;
+
+            for (int i = 0; i < length; i++)
+            {
+                uint aB = 0;
+                uint rB = 0;
+                uint gB = 0;
+                uint bB = 0;
+                 
+                for (int l = 0; l < this._layerBuffers.Length; l++)
+                {
+                    if (this._layerBuffers[l] == null) continue;
+
+                    uint aA = (byte)((this._layerBuffers[l][i] & 0xFF000000) >> 24);
+                    uint rA = (byte)((this._layerBuffers[l][i] & 0x00FF0000) >> 16);
+                    uint gA = (byte)((this._layerBuffers[l][i] & 0x0000FF00) >> 8);
+                    uint bA = (byte)((this._layerBuffers[l][i] & 0x000000FF));
+
+                    uint aO = (255 * aA + 255 * aB - aA * aB) / 255;
+
+                    if (aO == 0)
+                    {
+                        rB = 0;
+                        gB = 0;
+                        bB = 0;
+                    } 
+                    else
+                    {
+                        rB = (255 * rA * aA + 255 * rB * aB - rB * aB * aA) / (255 * aO);
+                        gB = (255 * gA * aA + 255 * gB * aB - gB * aB * aA) / (255 * aO);
+                        bB = (255 * bA * aA + 255 * bB * aB - bB * aB * aA) / (255 * aO);
+                    }
+                    aB = aO;
+                }
+
+                this._layerBuffers[0][i] = (rB << 24) | (rB << 16) | (gB << 8) | bB;
+            }
         }
-        
+
         public void ApplyDeferredJobs()
         {
             uint oldBrushColor = this._brushColor;
@@ -64,15 +115,39 @@ namespace DrawToFourier.UI
 
         public void ChangeBrushColor(int r, int g, int b)
         {
-            this._brushColor = (uint)((r << 16) | (g << 8) | b);
+            this._brushColor = 0xFF000000 | (uint)((r << 16) | (g << 8) | b);
         }
 
         public void ChangeActiveLayer(int newActiveLayer)
         {
             this._activeLayer = newActiveLayer;
 
-            if(this._layerBuffers[newActiveLayer] == null)
+            if (this._layerBuffers[newActiveLayer] == null)
                 this._layerBuffers[newActiveLayer] = new uint[this._bmp.PixelWidth * this._bmp.PixelHeight];
+        }
+
+        public void ClearAll()
+        {
+            for (int i = 0; i < this._layerBuffers[0].Length; i++)
+                this._layerBuffers[0][i] = 0xFF000000;
+
+            for (int i = 1; i < this._layerBuffers.Length; i++)
+            {
+                if (this._layerBuffers[i] == null) continue;
+
+                this._layerBuffers[i] = new uint[this._bmp.PixelWidth * this._bmp.PixelHeight];
+            }
+        }
+
+        public void Clear()
+        {
+            if (this._activeLayer != 0)
+                this._layerBuffers[this._activeLayer] = new uint[this._bmp.PixelWidth * this._bmp.PixelHeight];
+            else
+            {
+                for (int i = 0; i < this._layerBuffers[0].Length; i++)
+                    this._layerBuffers[0][i] = 0xFF000000;
+            }
         }
 
         public void DrawHollowCircle(Point circleCenter, int diameter, int brushSize)
