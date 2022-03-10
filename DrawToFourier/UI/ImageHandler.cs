@@ -12,7 +12,8 @@ using System.Windows.Media.Imaging;
 
 namespace DrawToFourier.UI
 {
-    internal class ImageHandler : ImageSourceWrapper
+
+    public class ImageHandler : ImageSourceWrapper
     {
         // Linear interpolation between two points
         public static double Linear(double x, Point p1, Point p2)
@@ -25,48 +26,115 @@ namespace DrawToFourier.UI
         }
 
         private WriteableBitmap _bmp;
-        private uint[] _secondBuffer;
-        private uint _brushColor;
+        private uint[] _buffer;
+        private LinkedList<Action>[] _layers;
+        private bool[] _layerModes; // False = LIFO, True = FIFO when composing
 
-        public ImageHandler(int width, int height)
+        public ImageHandler(int width, int height, int maxLayerCount = 0)
         {
             this.Source = this._bmp = new WriteableBitmap(width, height, 96, 96, PixelFormats.Bgr32, null);
-            this._secondBuffer = new uint[this._bmp.PixelWidth * this._bmp.PixelHeight];
-            this._brushColor = 0x00FFFFFF;
+            this._buffer = new uint[this._bmp.PixelWidth * this._bmp.PixelHeight];
+            Array.Fill(this._buffer, 0xFF000000);
+            this._layers = new LinkedList<Action>[maxLayerCount];
+            this._layerModes = new bool[maxLayerCount];
+
+            for (int i = 0; i < maxLayerCount; i++)
+                this._layers[i] = new LinkedList<Action>();
         }
 
-        public void Update()
+        public void RenderBuffer()
         {
-            this._bmp.WritePixels(new Int32Rect(0, 0, this._bmp.PixelWidth, this._bmp.PixelHeight), this._secondBuffer, 4 * this._bmp.PixelWidth, 0);
+            this._bmp.WritePixels(new Int32Rect(0, 0, this._bmp.PixelWidth, this._bmp.PixelHeight), this._buffer, 4 * this._bmp.PixelWidth, 0);
         }
 
-        public void Clear()
+        public void ClearBuffer()
         {
-            this._secondBuffer = new uint[this._bmp.PixelWidth * this._bmp.PixelHeight];
+            Array.Fill(this._buffer, 0xFF000000);
         }
 
-        public void ChangeBrushColor(int r, int g, int b)
+        public void ClearLayer(int layer)
         {
-            this._brushColor = (uint)((r << 16) | (g << 8) | b);
+            this._layers[layer].Clear();
         }
 
-        public void DrawHollowCircle(Point circleCenter, int diameter, int brushSize)
+        public void SetLayerMode(int layer, bool mode)
         {
-            double radius =  diameter / 2;
-            double unitAngle =  1 / radius;
+            this._layerModes[layer] = mode;
+        }
+
+        // Draws a hollow circle at given point with given diameter
+        public void DrawHollowCircle(Point circleCenter, int diameter, int brushSize, byte r, byte g, byte b, byte a = byte.MaxValue, int? layer = null)
+        {
+            uint color = this._brushColorToUint(r, g, b, a);
+
+            if (layer == null)
+                this._drawHollowCircleToBuffer(circleCenter, diameter, brushSize, color); 
+            else
+            {
+                if (this._layerModes[(int)layer]) // FIFO
+                    this._layers[(int)layer].AddFirst(() => { this._drawHollowCircleToBuffer(circleCenter, diameter, brushSize, color); });
+                else // LIFO
+                    this._layers[(int)layer].AddLast(() => { this._drawHollowCircleToBuffer(circleCenter, diameter, brushSize, color); });
+            }
+        }
+
+        // Draws a filled circle at given point with given diameter
+        public void DrawSolidCircle(Point circleCenter, int diameter, byte r, byte g, byte b, byte a = byte.MaxValue, int? layer = null)
+        {
+            uint color = this._brushColorToUint(r, g, b, a);
+            
+            if (layer == null)
+                this._drawSolidCircleToBuffer(circleCenter, diameter, color);
+            else
+            {
+                if (this._layerModes[(int)layer]) // FIFO
+                    this._layers[(int)layer].AddFirst(() => { this._drawSolidCircleToBuffer(circleCenter, diameter, color); });
+                else // LIFO
+                    this._layers[(int)layer].AddLast(() => { this._drawSolidCircleToBuffer(circleCenter, diameter, color); });
+            }
+        }
+
+        // Draws a line with 3 pixel stroke on current bitmap between given points.
+        // It does this by linearly interpolating points between given input points and draws a dot on each of them.
+        // Returns the last drawn point (right now return value may not be correct)
+        public void DrawLine(Point p1, Point p2, int brushSize, byte r, byte g, byte b, byte a = byte.MaxValue, int? layer = null)
+        {
+            uint color = this._brushColorToUint(r, g, b, a);
+            
+            if (layer == null)
+                this._drawLineToBuffer(p1, p2, brushSize, color);
+            else
+            {
+                if (this._layerModes[(int)layer]) // FIFO
+                    this._layers[(int)layer].AddFirst(() => { this._drawLineToBuffer(p1, p2, brushSize, color); });
+                else // LIFO
+                    this._layers[(int)layer].AddLast(() => { this._drawLineToBuffer(p1, p2, brushSize, color); });
+            }
+        }
+
+        private uint _brushColorToUint(byte r, byte g, byte b, byte a)
+        {
+            return (uint)((a << 24) | (r << 16) | (g << 8) | b);
+        }
+
+        // Buffer writing functions
+
+        private void _drawHollowCircleToBuffer(Point circleCenter, int diameter, int brushSize, uint color)
+        {
+            double radius = diameter / 2;
+            double unitAngle = 1 / radius;
 
             Point prevPoint = new Point(circleCenter.X + radius, circleCenter.Y);
 
             for (double t = unitAngle; t < 2 * Math.PI; t += unitAngle)
             {
                 Point p = new Point(circleCenter.X + radius * Math.Cos(t), circleCenter.Y + radius * Math.Sin(t));
-                DrawLine(p, prevPoint, brushSize);
+                this._drawLineToBuffer(p, prevPoint, brushSize, color);
                 prevPoint = p;
             }
         }
 
-        // Draws a circle at given poit with given diameter
-        public void DrawSolidCircle(Point circleCenter, int diameter)
+        private void _drawSolidCircleToBuffer(Point circleCenter, int diameter, uint color)
         {
             int w, h;
             h = w = diameter;
@@ -124,7 +192,7 @@ namespace DrawToFourier.UI
                     int jEnd = Math.Min((int)(cX - rX + endX), w - 1);
 
                     for (int j = jStart; j <= jEnd; j++)
-                        this._secondBuffer[(i + rY) * this._bmp.PixelWidth + rX + j] = this._brushColor;
+                        this._buffer[(i + rY) * this._bmp.PixelWidth + rX + j] = color;
                 }
             }
             else  // If diameter is odd
@@ -139,15 +207,12 @@ namespace DrawToFourier.UI
                     int jEnd = Math.Min((int)(cX - rX + endX), w - 1);
 
                     for (int j = jStart; j <= jEnd; j++)
-                        this._secondBuffer[(i + rY) * this._bmp.PixelWidth + rX + j] = this._brushColor;
+                        this._buffer[(i + rY) * this._bmp.PixelWidth + rX + j] = color;
                 }
             }
         }
 
-        // Draws a line with 3 pixel stroke on current bitmap between given points.
-        // It does this by linearly interpolating points between given input points and draws a dot on each of them.
-        // Returns the last drawn point (right now return value may not be correct)
-        public void DrawLine(Point p1, Point p2, int brushSize)
+        private void _drawLineToBuffer(Point p1, Point p2, int brushSize, uint color)
         {
             Vector pD = p2 - p1;
 
@@ -159,7 +224,7 @@ namespace DrawToFourier.UI
                     for (int x = (int)p1.X; x <= (int)p2.X; x++)
                     {
                         Point targetP = new Point((double)x, Linear(x, p1, p2));
-                        DrawSolidCircle(targetP, brushSize);
+                        this._drawSolidCircleToBuffer(targetP, brushSize, color);
                     }
                 }
                 else
@@ -167,7 +232,7 @@ namespace DrawToFourier.UI
                     for (int x = (int)p2.X; x <= (int)p1.X; x++)
                     {
                         Point targetP = new Point((double)x, Linear(x, p1, p2));
-                        DrawSolidCircle(targetP, brushSize);
+                        this._drawSolidCircleToBuffer(targetP, brushSize, color);
                     }
                 }
             }
@@ -181,7 +246,7 @@ namespace DrawToFourier.UI
                     for (int y = (int)p1.Y; y <= (int)p2.Y; y++)
                     {
                         Point targetP = new Point(Linear(y, tp1, tp2), (double)y);
-                        DrawSolidCircle(targetP, brushSize);
+                        this._drawSolidCircleToBuffer(targetP, brushSize, color);
                     }
                 }
                 else
@@ -189,10 +254,11 @@ namespace DrawToFourier.UI
                     for (int y = (int)p2.Y; y <= (int)p1.Y; y++)
                     {
                         Point targetP = new Point(Linear(y, tp1, tp2), (double)y);
-                        DrawSolidCircle(targetP, brushSize);
+                        this._drawSolidCircleToBuffer(targetP, brushSize, color);
                     }
                 }
             }
         }
+
     }
 }
