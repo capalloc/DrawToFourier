@@ -161,7 +161,6 @@ namespace DrawToFourier
 
             this._resultWindow = new ResultWindow(this._imgHandlerResult, this._initialDrawAreaLength, this._initialDrawAreaLength);
             this._resultWindow.Show();
-            this._imgHandlerResult.RenderBuffer();
         }
 
         private void AppStartupHandler(object sender, StartupEventArgs e)

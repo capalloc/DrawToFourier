@@ -117,6 +117,36 @@ namespace DrawToFourier.UI
             return (uint)((a << 24) | (r << 16) | (g << 8) | b);
         }
 
+        private uint _compositeColor(uint backgroundColor, uint addedColor)
+        {
+            uint aB = (byte)((backgroundColor & 0xFF000000) >> 24);
+            uint aA = (byte)((addedColor & 0xFF000000) >> 24);
+
+            if (aA == byte.MaxValue || aB == 0)
+                return addedColor;
+            if (aA == 0)
+                return backgroundColor;
+
+            uint aO = (255 * aA + 255 * aB - aA * aB) / 255;
+
+            if (aO == 0)
+                return 0;
+
+            uint rB = (byte)((backgroundColor & 0x00FF0000) >> 16);
+            uint gB = (byte)((backgroundColor & 0x0000FF00) >> 8);
+            uint bB = (byte)((backgroundColor & 0x000000FF));
+
+            uint rA = (byte)((addedColor & 0x00FF0000) >> 16);
+            uint gA = (byte)((addedColor & 0x0000FF00) >> 8);
+            uint bA = (byte)((addedColor & 0x000000FF));
+
+            rB = (255 * rA * aA + 255 * rB * aB - rB * aB * aA) / (255 * aO);
+            gB = (255 * gA * aA + 255 * gB * aB - gB * aB * aA) / (255 * aO);
+            bB = (255 * bA * aA + 255 * bB * aB - bB * aB * aA) / (255 * aO);
+
+            return (aO << 24) | (rB << 16) | (gB << 8) | bB;
+        }
+
         // Buffer writing functions
 
         private void _drawHollowCircleToBuffer(Point circleCenter, int diameter, int brushSize, uint color)
@@ -192,7 +222,11 @@ namespace DrawToFourier.UI
                     int jEnd = Math.Min((int)(cX - rX + endX), w - 1);
 
                     for (int j = jStart; j <= jEnd; j++)
-                        this._buffer[(i + rY) * this._bmp.PixelWidth + rX + j] = color;
+                    {
+                        int pixelIndex = (i + rY) * this._bmp.PixelWidth + rX + j;
+                        this._buffer[pixelIndex] = this._compositeColor(this._buffer[pixelIndex], color);
+                    }
+                        
                 }
             }
             else  // If diameter is odd
@@ -207,7 +241,10 @@ namespace DrawToFourier.UI
                     int jEnd = Math.Min((int)(cX - rX + endX), w - 1);
 
                     for (int j = jStart; j <= jEnd; j++)
-                        this._buffer[(i + rY) * this._bmp.PixelWidth + rX + j] = color;
+                    {
+                        int pixelIndex = (i + rY) * this._bmp.PixelWidth + rX + j;
+                        this._buffer[pixelIndex] = this._compositeColor(this._buffer[pixelIndex], color);
+                    }
                 }
             }
         }
