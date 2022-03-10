@@ -52,6 +52,17 @@ namespace DrawToFourier.UI
             Array.Fill(this._buffer, 0xFF000000);
         }
 
+        public void ComposeLayers()
+        {
+            for (int i = 0; i < this._layers.Length; i++)
+            {
+                foreach (Action action in this._layers[i])
+                {
+                    action.Invoke();
+                }
+            }
+        }
+
         public void ClearLayer(int layer)
         {
             this._layers[layer].Clear();
