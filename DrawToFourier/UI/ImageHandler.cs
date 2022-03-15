@@ -68,6 +68,12 @@ namespace DrawToFourier.UI
             this._layers[layer].Clear();
         }
 
+        public void ClearAllLayers()
+        {
+            for (int i = 0; i < this._layers.Length; i++)
+                this._layers[i].Clear();
+        }
+
         public void SetLayerMode(int layer, bool mode)
         {
             this._layerModes[layer] = mode;
