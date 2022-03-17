@@ -4,12 +4,12 @@ using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using System.Windows.Controls;
+//using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
-namespace DrawToFourier.UI
+namespace CustomDrawingWithWPF
 {
     // Provides an abstraction layer for providing means of image/canvas handling and using custom image sources.
     public abstract class ImageSourceWrapper : INotifyPropertyChanged

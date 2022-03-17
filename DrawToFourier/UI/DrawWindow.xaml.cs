@@ -1,4 +1,4 @@
-﻿using DrawToFourier.Fourier;
+﻿using CustomDrawingWithWPF;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
