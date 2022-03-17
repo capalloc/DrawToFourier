@@ -29,7 +29,7 @@
                            VerticalAlignment="Center"
                            MouseWheel="ResultImage_MouseWheel">
             <Rectangle.Fill>
-                <ImageBrush ImageSource="{Binding ImageSourceWrapper.Source}" ViewportUnits="RelativeToBoundingBox" Stretch="Uniform">
+                <ImageBrush ImageSource="{Binding Path=ImageSourceWrapper.Source}" ViewportUnits="RelativeToBoundingBox" Stretch="Uniform">
                     <ImageBrush.RelativeTransform>
                         <TransformGroup>
                             <ScaleTransform ScaleX="{Binding ZoomScale}" ScaleY="{Binding ZoomScale}" CenterX="{Binding ZoomCenterX}" CenterY="{Binding ZoomCenterY}" />

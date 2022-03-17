@@ -62,6 +62,7 @@ namespace DrawToFourier.UI
             this._screenEndY = 1;
 
             InitializeComponent();
+            this.ImageSourceWrapper.Source.Changed += (sender, e) => { this.ResultImageContainer.InvalidateVisual(); };
         }
 
         private void MainContainer_SizeChanged(object sender, SizeChangedEventArgs e)

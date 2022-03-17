@@ -82,6 +82,7 @@ namespace DrawToFourier.UI
             this.SimulateButtonEnabled = true;
 
             InitializeComponent();
+            this.ImageSourceWrapper.Source.Changed += (sender, e) => { this.DrawImageContainer.InvalidateVisual(); };
         }
 
         // When the window is resized by the user, the desired size of the draw area and size of button menu is programmatically set based on
