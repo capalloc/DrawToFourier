@@ -73,14 +73,21 @@ namespace CustomDrawingWithWPF
                     action.Invoke();
                 }
             }
-        }
-
+        }*/
+        
         public void ClearLayer(int layer)
         {
-            this._layers[layer].Clear();
+            for (int i = 0; i < this._layerChangedPixelCount[layer]; i++)
+            {
+                int loc = this._layerChangedPixels[layer][i];
+                this._compose(layer, loc, 0);
+                this._layerIsPixelChanged[layer][loc] = false;
+            }
+
+            this._layerChangedPixelCount[layer] = 0;
         }
 
-        public void ClearAllLayers()
+        /*public void ClearAllLayers()
         {
             for (int i = 0; i < this._layers.Length; i++)
                 this._layers[i].Clear();
