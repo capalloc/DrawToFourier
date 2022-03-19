@@ -26,19 +26,24 @@ namespace CustomDrawingWithWPF
 
         private WriteableBitmap _bmp;
         private uint[] _buffer;
-        private LinkedList<Action>[] _layers;
-        private bool[] _layerModes; // False = LIFO, True = FIFO when composing
+        private uint[][] _layers;
+        private uint[][] _layersCumulative;
+        private int?[] _nextLayerAfter;
+        private int?[] _lastLayerBefore;
 
-        public ImageHandler(int width, int height, int maxLayerCount = 0)
+        public ImageHandler(int width, int height, int maxLayerCount = 1)
         {
             this.Source = this._bmp = new WriteableBitmap(width, height, 96, 96, PixelFormats.Bgr32, null);
-            this._buffer = new uint[this._bmp.PixelWidth * this._bmp.PixelHeight];
-            Array.Fill(this._buffer, 0xFF000000);
-            this._layers = new LinkedList<Action>[maxLayerCount];
-            this._layerModes = new bool[maxLayerCount];
-
-            for (int i = 0; i < maxLayerCount; i++)
-                this._layers[i] = new LinkedList<Action>();
+            this._layers = new uint[maxLayerCount][];
+            this._layersCumulative = new uint[maxLayerCount][];
+            this._layers[0] = this._layersCumulative[0] = new uint[this._bmp.PixelWidth * this._bmp.PixelHeight];
+            Array.Fill(this._layers[0], 0xFF000000);
+            Array.Fill(this._layersCumulative[0], 0xFF000000);
+            this._buffer = this._layersCumulative[0];
+            this._nextLayerAfter = new int?[maxLayerCount];
+            this._lastLayerBefore = new int?[maxLayerCount];
+            Array.Fill(this._nextLayerAfter, null);
+            Array.Fill(this._lastLayerBefore, null);
         }
 
         public void RenderBuffer()
@@ -46,7 +51,7 @@ namespace CustomDrawingWithWPF
             this._bmp.WritePixels(new Int32Rect(0, 0, this._bmp.PixelWidth, this._bmp.PixelHeight), this._buffer, 4 * this._bmp.PixelWidth, 0);
         }
 
-        public void ClearBuffer()
+        /*public void ClearBuffer()
         {
             Array.Fill(this._buffer, 0xFF000000);
         }
@@ -71,60 +76,62 @@ namespace CustomDrawingWithWPF
         {
             for (int i = 0; i < this._layers.Length; i++)
                 this._layers[i].Clear();
-        }
-
-        public void SetLayerMode(int layer, bool mode)
-        {
-            this._layerModes[layer] = mode;
-        }
+        }*/
 
         // Draws a hollow circle at given point with given diameter
-        public void DrawHollowCircle(Point circleCenter, int diameter, int brushSize, byte r, byte g, byte b, byte a = byte.MaxValue, int? layer = null)
+        public void DrawHollowCircle(Point circleCenter, int diameter, int brushSize, byte r, byte g, byte b, byte a = byte.MaxValue, int layer = 0)
         {
+            this._initializeLayerIfNotExist(layer);
+
             uint color = this._brushColorToUint(r, g, b, a);
 
-            if (layer == null)
-                this._drawHollowCircleToBuffer(circleCenter, diameter, brushSize, color); 
-            else
-            {
-                if (this._layerModes[(int)layer]) // FIFO
-                    this._layers[(int)layer].AddFirst(() => { this._drawHollowCircleToBuffer(circleCenter, diameter, brushSize, color); });
-                else // LIFO
-                    this._layers[(int)layer].AddLast(() => { this._drawHollowCircleToBuffer(circleCenter, diameter, brushSize, color); });
-            }
+            this._drawHollowCircle(circleCenter, diameter, brushSize, color, layer);
         }
 
         // Draws a filled circle at given point with given diameter
-        public void DrawSolidCircle(Point circleCenter, int diameter, byte r, byte g, byte b, byte a = byte.MaxValue, int? layer = null)
+        public void DrawSolidCircle(Point circleCenter, int diameter, byte r, byte g, byte b, byte a = byte.MaxValue, int layer = 0)
         {
+            this._initializeLayerIfNotExist(layer);
+
             uint color = this._brushColorToUint(r, g, b, a);
-            
-            if (layer == null)
-                this._drawSolidCircleToBuffer(circleCenter, diameter, color);
-            else
-            {
-                if (this._layerModes[(int)layer]) // FIFO
-                    this._layers[(int)layer].AddFirst(() => { this._drawSolidCircleToBuffer(circleCenter, diameter, color); });
-                else // LIFO
-                    this._layers[(int)layer].AddLast(() => { this._drawSolidCircleToBuffer(circleCenter, diameter, color); });
-            }
+
+            this._drawSolidCircle(circleCenter, diameter, color, layer);
         }
 
         // Draws a line with 3 pixel stroke on current bitmap between given points.
         // It does this by linearly interpolating points between given input points and draws a dot on each of them.
         // Returns the last drawn point (right now return value may not be correct)
-        public void DrawLine(Point p1, Point p2, int brushSize, byte r, byte g, byte b, byte a = byte.MaxValue, int? layer = null)
+        public void DrawLine(Point p1, Point p2, int brushSize, byte r, byte g, byte b, byte a = byte.MaxValue, int layer = 0)
         {
+            this._initializeLayerIfNotExist(layer);
+
             uint color = this._brushColorToUint(r, g, b, a);
-            
-            if (layer == null)
-                this._drawLineToBuffer(p1, p2, brushSize, color);
-            else
+
+            this._drawLine(p1, p2, brushSize, color, layer);
+        }
+
+        private void _initializeLayerIfNotExist(int layer)
+        {
+            if (this._layers[layer] == null)
             {
-                if (this._layerModes[(int)layer]) // FIFO
-                    this._layers[(int)layer].AddFirst(() => { this._drawLineToBuffer(p1, p2, brushSize, color); });
-                else // LIFO
-                    this._layers[(int)layer].AddLast(() => { this._drawLineToBuffer(p1, p2, brushSize, color); });
+                this._layers[layer] = new uint[this._bmp.PixelWidth * this._bmp.PixelHeight];
+                this._layersCumulative[layer] = new uint[this._bmp.PixelWidth * this._bmp.PixelHeight];
+
+                int i = layer - 1;
+
+                while (this._layers[i] == null && i > 0) i--;
+
+                this._nextLayerAfter[layer] = this._nextLayerAfter[i];
+
+                if (this._nextLayerAfter[layer] != null)
+                    this._lastLayerBefore[(int)this._nextLayerAfter[layer]!] = layer;
+                else
+                    this._buffer = this._layersCumulative[layer];
+
+                this._nextLayerAfter[i] = layer;
+                this._lastLayerBefore[layer] = i;
+
+                Array.Copy(this._layersCumulative[i], this._layersCumulative[layer], this._layersCumulative[i].Length);
             }
         }
 
@@ -163,9 +170,28 @@ namespace CustomDrawingWithWPF
             return (aO << 24) | (rB << 16) | (gB << 8) | bB;
         }
 
+        private void _compose(int changedLayer, int changedPixel, uint color)
+        {
+            this._layers[changedLayer][changedPixel] = color;
+
+            int i = changedLayer;
+
+            while (true)
+            {
+                int? prevLayer = this._lastLayerBefore[i];
+
+                if (prevLayer != null)
+                    this._layersCumulative[i][changedPixel] = this._compositeColor(this._layersCumulative[(int)prevLayer!][changedPixel], this._layers[i][changedPixel]);
+
+                if (this._nextLayerAfter[i] == null) break;
+
+                i = (int)this._nextLayerAfter[i]!;
+            }
+        }
+
         // Buffer writing functions
 
-        private void _drawHollowCircleToBuffer(Point circleCenter, int diameter, int brushSize, uint color)
+        private void _drawHollowCircle(Point circleCenter, int diameter, int brushSize, uint color, int layer)
         {
             double radius = diameter / 2;
             double unitAngle = 1 / radius;
@@ -175,12 +201,12 @@ namespace CustomDrawingWithWPF
             for (double t = unitAngle; t < 2 * Math.PI; t += unitAngle)
             {
                 Point p = new Point(circleCenter.X + radius * Math.Cos(t), circleCenter.Y + radius * Math.Sin(t));
-                this._drawLineToBuffer(p, prevPoint, brushSize, color);
+                this._drawLine(p, prevPoint, brushSize, color, layer);
                 prevPoint = p;
             }
         }
 
-        private void _drawSolidCircleToBuffer(Point circleCenter, int diameter, uint color)
+        private void _drawSolidCircle(Point circleCenter, int diameter, uint color, int layer)
         {
             int w, h;
             h = w = diameter;
@@ -238,11 +264,7 @@ namespace CustomDrawingWithWPF
                     int jEnd = Math.Min((int)(cX - rX + endX), w - 1);
 
                     for (int j = jStart; j <= jEnd; j++)
-                    {
-                        int pixelIndex = (i + rY) * this._bmp.PixelWidth + rX + j;
-                        this._buffer[pixelIndex] = this._compositeColor(this._buffer[pixelIndex], color);
-                    }
-                        
+                        this._compose(layer, (i + rY) * this._bmp.PixelWidth + rX + j, color);
                 }
             }
             else  // If diameter is odd
@@ -257,15 +279,12 @@ namespace CustomDrawingWithWPF
                     int jEnd = Math.Min((int)(cX - rX + endX), w - 1);
 
                     for (int j = jStart; j <= jEnd; j++)
-                    {
-                        int pixelIndex = (i + rY) * this._bmp.PixelWidth + rX + j;
-                        this._buffer[pixelIndex] = this._compositeColor(this._buffer[pixelIndex], color);
-                    }
+                        this._compose(layer, (i + rY) * this._bmp.PixelWidth + rX + j, color);
                 }
             }
         }
 
-        private void _drawLineToBuffer(Point p1, Point p2, int brushSize, uint color)
+        private void _drawLine(Point p1, Point p2, int brushSize, uint color, int layer)
         {
             Vector pD = p2 - p1;
 
@@ -277,7 +296,7 @@ namespace CustomDrawingWithWPF
                     for (int x = (int)p1.X; x <= (int)p2.X; x++)
                     {
                         Point targetP = new Point((double)x, Linear(x, p1, p2));
-                        this._drawSolidCircleToBuffer(targetP, brushSize, color);
+                        this._drawSolidCircle(targetP, brushSize, color, layer);
                     }
                 }
                 else
@@ -285,7 +304,7 @@ namespace CustomDrawingWithWPF
                     for (int x = (int)p2.X; x <= (int)p1.X; x++)
                     {
                         Point targetP = new Point((double)x, Linear(x, p1, p2));
-                        this._drawSolidCircleToBuffer(targetP, brushSize, color);
+                        this._drawSolidCircle(targetP, brushSize, color, layer);
                     }
                 }
             }
@@ -299,7 +318,7 @@ namespace CustomDrawingWithWPF
                     for (int y = (int)p1.Y; y <= (int)p2.Y; y++)
                     {
                         Point targetP = new Point(Linear(y, tp1, tp2), (double)y);
-                        this._drawSolidCircleToBuffer(targetP, brushSize, color);
+                        this._drawSolidCircle(targetP, brushSize, color, layer);
                     }
                 }
                 else
@@ -307,7 +326,7 @@ namespace CustomDrawingWithWPF
                     for (int y = (int)p2.Y; y <= (int)p1.Y; y++)
                     {
                         Point targetP = new Point(Linear(y, tp1, tp2), (double)y);
-                        this._drawSolidCircleToBuffer(targetP, brushSize, color);
+                        this._drawSolidCircle(targetP, brushSize, color, layer);
                     }
                 }
             }
