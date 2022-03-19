@@ -26,32 +26,60 @@ namespace CustomDrawingWithWPF
 
         private WriteableBitmap _bmp;
         private uint[] _buffer;
+        private int _pixelCount;
+
         private uint[][] _layers;
-        private uint[][] _layersCumulative;
+        private uint[][] _layersComposed;
+
         private int[][] _layerChangedPixels;
+        private int[][] _layerAllChangesPixels;
         private bool[][] _layerIsPixelChanged;
+        private bool[][] _layerIsPixelAllChanges;
         private int[] _layerChangedPixelCount;
+        private int[] _layerAllChangesPixelCount;
+
         private int?[] _nextLayerAfter;
         private int?[] _lastLayerBefore;
 
-        public ImageHandler(int width, int height, int maxLayerCount = 1)
+        public ImageHandler(int width, int height, int maxLayerCount = 1, byte bR = 0, byte bG = 0, byte bB = 0, byte bA = 255)
         {
+            if (maxLayerCount < 1) throw new ArgumentOutOfRangeException(nameof(maxLayerCount));
+            if (width < 1) throw new ArgumentOutOfRangeException(nameof(width));
+            if (height < 1) throw new ArgumentOutOfRangeException(nameof(height));
+
             this.Source = this._bmp = new WriteableBitmap(width, height, 96, 96, PixelFormats.Bgr32, null);
-            this._layers = new uint[maxLayerCount][];
-            this._layersCumulative = new uint[maxLayerCount][];
-            this._layerChangedPixels = new int[maxLayerCount][];
-            this._layerIsPixelChanged = new bool[maxLayerCount][];
-            this._layers[0] = this._layersCumulative[0] = new uint[this._bmp.PixelWidth * this._bmp.PixelHeight];
-            this._layerChangedPixels[0] = new int[this._bmp.PixelWidth * this._bmp.PixelHeight];
-            this._layerIsPixelChanged[0] = new bool[this._bmp.PixelWidth * this._bmp.PixelHeight];
-            this._layerChangedPixelCount = new int[maxLayerCount];
-            Array.Fill(this._layers[0], 0xFF000000);
-            Array.Fill(this._layersCumulative[0], 0xFF000000);
-            this._buffer = this._layersCumulative[0];
-            this._nextLayerAfter = new int?[maxLayerCount];
-            this._lastLayerBefore = new int?[maxLayerCount];
-            Array.Fill(this._nextLayerAfter, null);
-            Array.Fill(this._lastLayerBefore, null);
+            this._pixelCount = this._bmp.PixelWidth * this._bmp.PixelHeight;
+
+            this._layers = new uint[maxLayerCount + 1][];
+            this._layersComposed = new uint[maxLayerCount + 1][];
+
+            this._layerChangedPixels = new int[maxLayerCount + 1][];
+            this._layerAllChangesPixels = new int[maxLayerCount + 1][];
+
+            this._layerIsPixelChanged = new bool[maxLayerCount + 1][];
+            this._layerIsPixelAllChanges = new bool[maxLayerCount + 1][];
+
+            this._layers[0] = new uint[this._pixelCount];
+            this._layersComposed[0] = this._layers[0];
+            Array.Fill(this._layers[0], this._brushColorToUint(bR, bG, bB, bA));
+
+            this._layers[1] = new uint[this._pixelCount];
+            this._layersComposed[1] = new uint[this._pixelCount];
+            Array.Copy(this._layersComposed[0], this._layersComposed[1], this._pixelCount);
+
+            this._layerChangedPixels[1] = new int[this._pixelCount];
+            this._layerAllChangesPixels[1] = new int[this._pixelCount];
+            this._layerIsPixelChanged[1] = new bool[this._pixelCount];
+            this._layerIsPixelAllChanges[1] = new bool[this._pixelCount];
+            this._layerChangedPixelCount = new int[maxLayerCount + 1];
+            this._layerAllChangesPixelCount = new int[maxLayerCount + 1];
+
+            this._nextLayerAfter = new int?[maxLayerCount + 1];
+            this._lastLayerBefore = new int?[maxLayerCount + 1];
+            this._nextLayerAfter[0] = 1;
+            this._lastLayerBefore[1] = 0;
+
+            this._buffer = this._layersComposed[1];
         }
 
         public void RenderBuffer()
@@ -62,29 +90,105 @@ namespace CustomDrawingWithWPF
         /*public void ClearBuffer()
         {
             Array.Fill(this._buffer, 0xFF000000);
-        }
+        }*/
 
         public void ComposeLayers()
         {
-            for (int i = 0; i < this._layers.Length; i++)
+            int currLayer = 1;
+            int? prevLayer;
+            int? nextLayer;
+
+            do
             {
-                foreach (Action action in this._layers[i])
+                prevLayer = this._lastLayerBefore[currLayer];
+                nextLayer = this._nextLayerAfter[currLayer];
+
+                if (this._layerChangedPixelCount[currLayer] > 0)
                 {
-                    action.Invoke();
+                    if (nextLayer != null)
+                    {
+                        for (; this._layerChangedPixelCount[currLayer] > 0; this._layerChangedPixelCount[currLayer]--)
+                        {
+                            int pixelLoc = this._layerChangedPixels[currLayer][this._layerChangedPixelCount[currLayer] - 1];
+                            uint newColor = this._compositeColor(this._layersComposed[(int)prevLayer!][pixelLoc], this._layers[currLayer][pixelLoc]);
+
+                            if (this._layersComposed[currLayer][pixelLoc] == newColor) continue;
+                            this._layersComposed[currLayer][pixelLoc] = newColor;
+
+                            if (this._layers[(int)nextLayer][pixelLoc] >= 0xFF000000 || this._layerIsPixelChanged[(int)nextLayer][pixelLoc]) continue;
+
+                            this._layerIsPixelChanged[(int)nextLayer][pixelLoc] = true;
+                            this._layerChangedPixels[(int)nextLayer][this._layerChangedPixelCount[(int)nextLayer]] = pixelLoc;
+                            this._layerChangedPixelCount[(int)nextLayer]++;
+                        }
+                    }
+                    else
+                    {
+                        for (; this._layerChangedPixelCount[currLayer] > 0; this._layerChangedPixelCount[currLayer]--)
+                        {
+                            int pixelLoc = this._layerChangedPixels[currLayer][this._layerChangedPixelCount[currLayer] - 1];
+                            uint newColor = this._compositeColor(this._layersComposed[(int)prevLayer!][pixelLoc], this._layers[currLayer][pixelLoc]);
+
+                            if (this._layersComposed[currLayer][pixelLoc] == newColor) continue;
+                            this._layersComposed[currLayer][pixelLoc] = newColor;
+                        }
+                    }
+
+                    this._layerIsPixelChanged[currLayer] = new bool[this._pixelCount];
                 }
-            }
-        }*/
+
+                currLayer = nextLayer == null ? -1 : (int)nextLayer;
+            } while (nextLayer != null);
+        }
         
-        public void ClearLayer(int layer)
+        /*private void _compose()
         {
-            for (int i = 0; i < this._layerChangedPixelCount[layer]; i++)
+            if (!this._layerIsPixelChanged[layer][pixel])
             {
-                int loc = this._layerChangedPixels[layer][i];
-                this._compose(layer, loc, 0);
-                this._layerIsPixelChanged[layer][loc] = false;
+                this._layerChangedPixels[layer][this._layerChangedPixelCount[layer]] = pixel;
+                this._layerChangedPixelCount[layer]++;
+                this._layerIsPixelChanged[layer][pixel] = true;
             }
 
-            this._layerChangedPixelCount[layer] = 0;
+            this._layers[layer][pixel] = color;
+            int i = layer;
+
+            while (true)
+            {
+                int? prevLayer = this._lastLayerBefore[i];
+
+                if (prevLayer != null)
+                {
+                    uint newColor = this._compositeColor(this._layersComposed[(int)prevLayer!][pixel], this._layers[i][pixel]);
+
+                    if (this._layersComposed[i][pixel] == newColor) break;
+
+                    this._layersComposed[i][pixel] = newColor;
+                }
+
+                if (this._nextLayerAfter[i] == null) break;
+
+                i = (int)this._nextLayerAfter[i]!;
+            }
+        }*/
+
+        public void ClearLayer(int layer)
+        {
+            for (; this._layerAllChangesPixelCount[layer] > 0; this._layerAllChangesPixelCount[layer]--)
+            {
+                int pixelLoc = this._layerAllChangesPixels[layer][this._layerAllChangesPixelCount[layer] - 1];
+
+                this._layers[layer][pixelLoc] = 0;
+
+                if (!this._layerIsPixelChanged[layer][pixelLoc])
+                {
+                    this._layerChangedPixels[layer][this._layerChangedPixelCount[layer]] = pixelLoc;
+                    this._layerChangedPixelCount[layer]++;
+                    this._layerIsPixelChanged[layer][pixelLoc] = true;
+                }
+
+                this._layerIsPixelAllChanges[layer][pixelLoc] = false;
+            }
         }
 
         /*public void ClearAllLayers()
@@ -94,61 +198,56 @@ namespace CustomDrawingWithWPF
         }*/
 
         // Draws a hollow circle at given point with given diameter
-        public void DrawHollowCircle(Point circleCenter, int diameter, int brushSize, byte r, byte g, byte b, byte a = byte.MaxValue, int layer = 0)
+        public void DrawHollowCircle(Point circleCenter, int diameter, int brushSize, byte r, byte g, byte b, byte a = 255, int layer = 1)
         {
             this._initializeLayerIfNotExist(layer);
-
-            uint color = this._brushColorToUint(r, g, b, a);
-
-            this._drawHollowCircle(circleCenter, diameter, brushSize, color, layer);
+            this._drawHollowCircle(circleCenter, diameter, brushSize, this._brushColorToUint(r, g, b, a), layer);
         }
 
         // Draws a filled circle at given point with given diameter
-        public void DrawSolidCircle(Point circleCenter, int diameter, byte r, byte g, byte b, byte a = byte.MaxValue, int layer = 0)
+        public void DrawSolidCircle(Point circleCenter, int diameter, byte r, byte g, byte b, byte a = 255, int layer = 1)
         {
             this._initializeLayerIfNotExist(layer);
-
-            uint color = this._brushColorToUint(r, g, b, a);
-
-            this._drawSolidCircle(circleCenter, diameter, color, layer);
+            this._drawSolidCircle(circleCenter, diameter, this._brushColorToUint(r, g, b, a), layer);
         }
 
         // Draws a line with 3 pixel stroke on current bitmap between given points.
         // It does this by linearly interpolating points between given input points and draws a dot on each of them.
         // Returns the last drawn point (right now return value may not be correct)
-        public void DrawLine(Point p1, Point p2, int brushSize, byte r, byte g, byte b, byte a = byte.MaxValue, int layer = 0)
+        public void DrawLine(Point p1, Point p2, int brushSize, byte r, byte g, byte b, byte a = 255, int layer = 1)
         {
             this._initializeLayerIfNotExist(layer);
-
-            uint color = this._brushColorToUint(r, g, b, a);
-
-            this._drawLine(p1, p2, brushSize, color, layer);
+            this._drawLine(p1, p2, brushSize, this._brushColorToUint(r, g, b, a), layer);
         }
 
         private void _initializeLayerIfNotExist(int layer)
         {
+            if (layer < 1) throw new ArgumentOutOfRangeException(nameof(layer));
+
             if (this._layers[layer] == null)
             {
                 this._layers[layer] = new uint[this._bmp.PixelWidth * this._bmp.PixelHeight];
-                this._layersCumulative[layer] = new uint[this._bmp.PixelWidth * this._bmp.PixelHeight];
+                this._layersComposed[layer] = new uint[this._bmp.PixelWidth * this._bmp.PixelHeight];
                 this._layerChangedPixels[layer] = new int[this._bmp.PixelWidth * this._bmp.PixelHeight];
                 this._layerIsPixelChanged[layer] = new bool[this._bmp.PixelWidth * this._bmp.PixelHeight];
+                this._layerAllChangesPixels[layer] = new int[this._bmp.PixelWidth * this._bmp.PixelHeight];
+                this._layerIsPixelAllChanges[layer] = new bool[this._bmp.PixelWidth * this._bmp.PixelHeight];
 
                 int i = layer - 1;
 
-                while (this._layers[i] == null && i > 0) i--;
+                while (this._layers[i] == null && i > 1) i--;
 
                 this._nextLayerAfter[layer] = this._nextLayerAfter[i];
 
                 if (this._nextLayerAfter[layer] != null)
                     this._lastLayerBefore[(int)this._nextLayerAfter[layer]!] = layer;
                 else
-                    this._buffer = this._layersCumulative[layer];
+                    this._buffer = this._layersComposed[layer];
 
                 this._nextLayerAfter[i] = layer;
                 this._lastLayerBefore[layer] = i;
 
-                Array.Copy(this._layersCumulative[i], this._layersCumulative[layer], this._layersCumulative[i].Length);
+                Array.Copy(this._layersComposed[i], this._layersComposed[layer], this._layersComposed[i].Length);
             }
         }
 
@@ -187,34 +286,25 @@ namespace CustomDrawingWithWPF
             return (aO << 24) | (rB << 16) | (gB << 8) | bB;
         }
 
-        private void _compose(int changedLayer, int changedPixel, uint color)
+        private void _paintLayer(int layer, int pixel, uint color)
         {
-            if (!this._layerIsPixelChanged[changedLayer][changedPixel])
+            if (this._layers[layer][pixel] != color)
             {
-                this._layerChangedPixels[changedLayer][this._layerChangedPixelCount[changedLayer]] = changedPixel;
-                this._layerChangedPixelCount[changedLayer]++;
-                this._layerIsPixelChanged[changedLayer][changedPixel] = true;
-            }
-
-            this._layers[changedLayer][changedPixel] = color;
-            int i = changedLayer;
-
-            while (true)
-            {
-                int? prevLayer = this._lastLayerBefore[i];
-
-                if (prevLayer != null) 
+                if (!this._layerIsPixelChanged[layer][pixel])
                 {
-                    uint newColor = this._compositeColor(this._layersCumulative[(int)prevLayer!][changedPixel], this._layers[i][changedPixel]);
-
-                    if (this._layersCumulative[i][changedPixel] == newColor) break;
-
-                    this._layersCumulative[i][changedPixel] = newColor;
+                    this._layerChangedPixels[layer][this._layerChangedPixelCount[layer]] = pixel;
+                    this._layerChangedPixelCount[layer]++;
+                    this._layerIsPixelChanged[layer][pixel] = true;
                 }
 
-                if (this._nextLayerAfter[i] == null) break;
+                if (!this._layerIsPixelAllChanges[layer][pixel])
+                {
+                    this._layerAllChangesPixels[layer][this._layerAllChangesPixelCount[layer]] = pixel;
+                    this._layerAllChangesPixelCount[layer]++;
+                    this._layerIsPixelAllChanges[layer][pixel] = true;
+                }
 
-                i = (int)this._nextLayerAfter[i]!;
+                this._layers[layer][pixel] = color;
             }
         }
 
@@ -293,7 +383,7 @@ namespace CustomDrawingWithWPF
                     int jEnd = Math.Min((int)(cX - rX + endX), w - 1);
 
                     for (int j = jStart; j <= jEnd; j++)
-                        this._compose(layer, (i + rY) * this._bmp.PixelWidth + rX + j, color);
+                        this._paintLayer(layer, (i + rY) * this._bmp.PixelWidth + rX + j, color);
                 }
             }
             else  // If diameter is odd
@@ -308,7 +398,7 @@ namespace CustomDrawingWithWPF
                     int jEnd = Math.Min((int)(cX - rX + endX), w - 1);
 
                     for (int j = jStart; j <= jEnd; j++)
-                        this._compose(layer, (i + rY) * this._bmp.PixelWidth + rX + j, color);
+                        this._paintLayer(layer, (i + rY) * this._bmp.PixelWidth + rX + j, color);
                 }
             }
         }
