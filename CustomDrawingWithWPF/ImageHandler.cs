@@ -28,6 +28,9 @@ namespace CustomDrawingWithWPF
         private uint[] _buffer;
         private uint[][] _layers;
         private uint[][] _layersCumulative;
+        private int[][] _layerChangedPixels;
+        private bool[][] _layerIsPixelChanged;
+        private int[] _layerChangedPixelCount;
         private int?[] _nextLayerAfter;
         private int?[] _lastLayerBefore;
 
@@ -36,7 +39,12 @@ namespace CustomDrawingWithWPF
             this.Source = this._bmp = new WriteableBitmap(width, height, 96, 96, PixelFormats.Bgr32, null);
             this._layers = new uint[maxLayerCount][];
             this._layersCumulative = new uint[maxLayerCount][];
+            this._layerChangedPixels = new int[maxLayerCount][];
+            this._layerIsPixelChanged = new bool[maxLayerCount][];
             this._layers[0] = this._layersCumulative[0] = new uint[this._bmp.PixelWidth * this._bmp.PixelHeight];
+            this._layerChangedPixels[0] = new int[this._bmp.PixelWidth * this._bmp.PixelHeight];
+            this._layerIsPixelChanged[0] = new bool[this._bmp.PixelWidth * this._bmp.PixelHeight];
+            this._layerChangedPixelCount = new int[maxLayerCount];
             Array.Fill(this._layers[0], 0xFF000000);
             Array.Fill(this._layersCumulative[0], 0xFF000000);
             this._buffer = this._layersCumulative[0];
@@ -116,6 +124,8 @@ namespace CustomDrawingWithWPF
             {
                 this._layers[layer] = new uint[this._bmp.PixelWidth * this._bmp.PixelHeight];
                 this._layersCumulative[layer] = new uint[this._bmp.PixelWidth * this._bmp.PixelHeight];
+                this._layerChangedPixels[layer] = new int[this._bmp.PixelWidth * this._bmp.PixelHeight];
+                this._layerIsPixelChanged[layer] = new bool[this._bmp.PixelWidth * this._bmp.PixelHeight];
 
                 int i = layer - 1;
 
@@ -172,16 +182,28 @@ namespace CustomDrawingWithWPF
 
         private void _compose(int changedLayer, int changedPixel, uint color)
         {
-            this._layers[changedLayer][changedPixel] = color;
+            if (!this._layerIsPixelChanged[changedLayer][changedPixel])
+            {
+                this._layerChangedPixels[changedLayer][this._layerChangedPixelCount[changedLayer]] = changedPixel;
+                this._layerChangedPixelCount[changedLayer]++;
+                this._layerIsPixelChanged[changedLayer][changedPixel] = true;
+            }
 
+            this._layers[changedLayer][changedPixel] = color;
             int i = changedLayer;
 
             while (true)
             {
                 int? prevLayer = this._lastLayerBefore[i];
 
-                if (prevLayer != null)
-                    this._layersCumulative[i][changedPixel] = this._compositeColor(this._layersCumulative[(int)prevLayer!][changedPixel], this._layers[i][changedPixel]);
+                if (prevLayer != null) 
+                {
+                    uint newColor = this._compositeColor(this._layersCumulative[(int)prevLayer!][changedPixel], this._layers[i][changedPixel]);
+
+                    if (this._layersCumulative[i][changedPixel] == newColor) break;
+
+                    this._layersCumulative[i][changedPixel] = newColor;
+                }
 
                 if (this._nextLayerAfter[i] == null) break;
 
