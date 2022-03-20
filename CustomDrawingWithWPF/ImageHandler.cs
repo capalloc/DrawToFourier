@@ -26,6 +26,8 @@ namespace CustomDrawingWithWPF
 
         private WriteableBitmap _bmp;
         private uint[] _buffer;
+        private int _pixelWidth;
+        private int _pixelHeight;
         private int _pixelCount;
 
         private uint[][] _layers;
@@ -48,6 +50,8 @@ namespace CustomDrawingWithWPF
             if (height < 1) throw new ArgumentOutOfRangeException(nameof(height));
 
             this.Source = this._bmp = new WriteableBitmap(width, height, 96, 96, PixelFormats.Bgr32, null);
+            this._pixelWidth = this._bmp.PixelWidth;
+            this._pixelHeight = this._bmp.PixelHeight;
             this._pixelCount = this._bmp.PixelWidth * this._bmp.PixelHeight;
 
             this._layers = new uint[maxLayerCount + 1][];
@@ -84,13 +88,8 @@ namespace CustomDrawingWithWPF
 
         public void RenderBuffer()
         {
-            this._bmp.WritePixels(new Int32Rect(0, 0, this._bmp.PixelWidth, this._bmp.PixelHeight), this._buffer, 4 * this._bmp.PixelWidth, 0);
+            this._bmp.WritePixels(new Int32Rect(0, 0, this._pixelWidth, this._pixelHeight), this._buffer, 4 * this._pixelWidth, 0);
         }
-
-        /*public void ClearBuffer()
-        {
-            Array.Fill(this._buffer, 0xFF000000);
-        }*/
 
         public void ComposeLayers()
         {
@@ -140,37 +139,6 @@ namespace CustomDrawingWithWPF
                 currLayer = nextLayer == null ? -1 : (int)nextLayer;
             } while (nextLayer != null);
         }
-        
-        /*private void _compose()
-        {
-            if (!this._layerIsPixelChanged[layer][pixel])
-            {
-                this._layerChangedPixels[layer][this._layerChangedPixelCount[layer]] = pixel;
-                this._layerChangedPixelCount[layer]++;
-                this._layerIsPixelChanged[layer][pixel] = true;
-            }
-
-            this._layers[layer][pixel] = color;
-            int i = layer;
-
-            while (true)
-            {
-                int? prevLayer = this._lastLayerBefore[i];
-
-                if (prevLayer != null)
-                {
-                    uint newColor = this._compositeColor(this._layersComposed[(int)prevLayer!][pixel], this._layers[i][pixel]);
-
-                    if (this._layersComposed[i][pixel] == newColor) break;
-
-                    this._layersComposed[i][pixel] = newColor;
-                }
-
-                if (this._nextLayerAfter[i] == null) break;
-
-                i = (int)this._nextLayerAfter[i]!;
-            }
-        }*/
 
         public void ClearLayer(int layer)
         {
@@ -226,12 +194,12 @@ namespace CustomDrawingWithWPF
 
             if (this._layers[layer] == null)
             {
-                this._layers[layer] = new uint[this._bmp.PixelWidth * this._bmp.PixelHeight];
-                this._layersComposed[layer] = new uint[this._bmp.PixelWidth * this._bmp.PixelHeight];
-                this._layerChangedPixels[layer] = new int[this._bmp.PixelWidth * this._bmp.PixelHeight];
-                this._layerIsPixelChanged[layer] = new bool[this._bmp.PixelWidth * this._bmp.PixelHeight];
-                this._layerAllChangesPixels[layer] = new int[this._bmp.PixelWidth * this._bmp.PixelHeight];
-                this._layerIsPixelAllChanges[layer] = new bool[this._bmp.PixelWidth * this._bmp.PixelHeight];
+                this._layers[layer] = new uint[this._pixelCount];
+                this._layersComposed[layer] = new uint[this._pixelCount];
+                this._layerChangedPixels[layer] = new int[this._pixelCount];
+                this._layerIsPixelChanged[layer] = new bool[this._pixelCount];
+                this._layerAllChangesPixels[layer] = new int[this._pixelCount];
+                this._layerIsPixelAllChanges[layer] = new bool[this._pixelCount];
 
                 int i = layer - 1;
 
@@ -313,7 +281,7 @@ namespace CustomDrawingWithWPF
         private void _drawHollowCircle(Point circleCenter, int diameter, int brushSize, uint color, int layer)
         {
             double radius = diameter / 2;
-            double unitAngle = 1 / radius;
+            double unitAngle = brushSize / radius;
 
             Point prevPoint = new Point(circleCenter.X + radius, circleCenter.Y);
 
@@ -359,13 +327,13 @@ namespace CustomDrawingWithWPF
             if (h <= 0 || w <= 0) // If circle is completely outside the bounds
                 return;
 
-            if (rX + w > this._bmp.PixelWidth)
+            if (rX + w > this._pixelWidth)
             {
-                w = this._bmp.PixelWidth - rX;
+                w = this._pixelWidth - rX;
             }
-            if (rY + h > this._bmp.PixelHeight)
+            if (rY + h > this._pixelHeight)
             {
-                h = this._bmp.PixelHeight - rY;
+                h = this._pixelHeight - rY;
             }
 
             if (h <= 0 || w <= 0) // If circle is completely outside the bounds
@@ -383,7 +351,7 @@ namespace CustomDrawingWithWPF
                     int jEnd = Math.Min((int)(cX - rX + endX), w - 1);
 
                     for (int j = jStart; j <= jEnd; j++)
-                        this._paintLayer(layer, (i + rY) * this._bmp.PixelWidth + rX + j, color);
+                        this._paintLayer(layer, (i + rY) * this._pixelWidth + rX + j, color);
                 }
             }
             else  // If diameter is odd
@@ -398,14 +366,92 @@ namespace CustomDrawingWithWPF
                     int jEnd = Math.Min((int)(cX - rX + endX), w - 1);
 
                     for (int j = jStart; j <= jEnd; j++)
-                        this._paintLayer(layer, (i + rY) * this._bmp.PixelWidth + rX + j, color);
+                        this._paintLayer(layer, (i + rY) * this._pixelWidth + rX + j, color);
                 }
             }
         }
 
         private void _drawLine(Point p1, Point p2, int brushSize, uint color, int layer)
         {
-            Vector pD = p2 - p1;
+            Point leftP = Math.Min(p1.X, p2.X) == p1.X ? p1 : p2;
+            Point rightP = leftP == p1 ? p2 : p1;
+
+            double distance = (rightP - leftP).Length;
+            double cos = (rightP.X - leftP.X) / distance;
+            double sin = (rightP.Y - leftP.Y) / distance;
+
+            this._drawSolidCircle(leftP, brushSize, color, layer);
+            this._drawSolidCircle(rightP, brushSize, color, layer);
+
+            int lowerY;
+            int upperY;
+            int lowerX;
+            int upperX;
+
+            if (sin >= 0)
+            {
+                lowerY = Math.Max((int)(leftP.Y - brushSize * cos / 2), 0);
+                upperY = Math.Min((int)(rightP.Y + brushSize * cos / 2), this._pixelHeight - 1);
+
+                for (int y = lowerY; y <= upperY; y++)
+                {
+                    if (y <= leftP.Y + brushSize * cos / 2 && cos != 0)
+                    {
+                        lowerX = Math.Max((int)(-sin * y / cos + sin * leftP.Y / cos + leftP.X), 0);
+                    }
+                    else
+                    {
+                        lowerX = Math.Max((int)(cos * y / sin - cos * leftP.Y / sin + leftP.X - brushSize / (2 * sin)), 0);
+                    }
+
+                    if (y <= rightP.Y - brushSize * cos / 2 && sin != 0)
+                    {
+                        upperX = Math.Min((int)(cos * y / sin - cos * leftP.Y / sin + leftP.X + brushSize / (2 * sin)), this._pixelWidth - 1);
+                    }
+                    else
+                    {
+                        upperX = Math.Min((int)(-sin * y / cos + sin * rightP.Y / cos + rightP.X), this._pixelWidth - 1);
+                    }
+
+                    for (int x = lowerX; x <= upperX; x++)
+                    {
+                        this._paintLayer(layer, this._pixelWidth * y + x, color);
+                    }
+                }
+            } 
+            else
+            {
+                lowerY = Math.Max((int)(rightP.Y - brushSize * cos / 2), 0);
+                upperY = Math.Min((int)(leftP.Y + brushSize * cos / 2), this._pixelHeight - 1);
+
+                for (int y = lowerY; y <= upperY; y++)
+                {
+                    if (y <= leftP.Y - brushSize * cos / 2 && sin != 0)
+                    {
+                        lowerX = Math.Max((int)(cos * y / sin - cos * leftP.Y / sin + leftP.X + brushSize / (2 * sin)), 0);
+                    }
+                    else
+                    {
+                        lowerX = Math.Max((int)(-sin * y / cos + sin * leftP.Y / cos + leftP.X), 0);
+                    }
+
+                    if (y <= rightP.Y + brushSize * cos / 2 && cos != 0)
+                    {
+                        upperX = Math.Min((int)(-sin * y / cos + sin * rightP.Y / cos + rightP.X), this._pixelWidth - 1);
+                    }
+                    else
+                    {
+                        upperX = Math.Min((int)(cos * y / sin - cos * leftP.Y / sin + leftP.X - brushSize / (2 * sin)), this._pixelWidth - 1);
+                    }
+
+                    for (int x = lowerX; x <= upperX; x++)
+                    {
+                        this._paintLayer(layer, this._pixelWidth * y + x, color);
+                    }
+                }
+            }
+
+            /*Vector pD = p2 - p1;
 
             if (Math.Abs(pD.X) >= Math.Abs(pD.Y))
             {
@@ -448,7 +494,7 @@ namespace CustomDrawingWithWPF
                         this._drawSolidCircle(targetP, brushSize, color, layer);
                     }
                 }
-            }
+            }*/
         }
 
     }
