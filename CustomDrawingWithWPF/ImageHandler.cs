@@ -280,17 +280,23 @@ namespace CustomDrawingWithWPF
 
         private void _drawHollowCircle(Point circleCenter, int diameter, int brushSize, uint color, int layer)
         {
+            if (diameter == 0) return;
+
             double radius = diameter / 2;
             double unitAngle = brushSize / radius;
 
             Point prevPoint = new Point(circleCenter.X + radius, circleCenter.Y);
 
-            for (double t = unitAngle; t < 2 * Math.PI; t += unitAngle)
+            double t;
+
+            for (t = unitAngle; t < 2 * Math.PI; t += unitAngle)
             {
                 Point p = new Point(circleCenter.X + radius * Math.Cos(t), circleCenter.Y + radius * Math.Sin(t));
                 this._drawLine(p, prevPoint, brushSize, color, layer);
                 prevPoint = p;
             }
+
+            this._drawLine(new Point(circleCenter.X + radius * Math.Cos(t + unitAngle), circleCenter.Y + radius * Math.Sin(t + unitAngle)), prevPoint, brushSize, color, layer);
         }
 
         private void _drawSolidCircle(Point circleCenter, int diameter, uint color, int layer)
@@ -373,7 +379,248 @@ namespace CustomDrawingWithWPF
 
         private void _drawLine(Point p1, Point p2, int brushSize, uint color, int layer)
         {
-            Point leftP = Math.Min(p1.X, p2.X) == p1.X ? p1 : p2;
+            double distance = (p2 - p1).Length;
+            double cos = (p2.X - p1.X) / distance;
+            double sin = (p2.Y - p1.Y) / distance;
+
+            int gx1 = (int)p1.X;
+            int gx2 = (int)p2.X;
+            int gy1 = (int)p1.Y;
+            int gy2 = (int)p2.Y;
+
+            int ox1 = (int)(-brushSize * sin / 2);
+            int ox2 = (int)(brushSize * sin / 2);
+            int oy1 = (int)(brushSize * cos / 2);
+            int oy2 = (int)(-brushSize * cos / 2);
+
+            int osx = ox1 < ox2 ? 1 : -1;
+            int osy = oy1 < oy2 ? 1 : -1;
+            int odx = Math.Abs(ox2 - ox1);
+            int ody = -Math.Abs(oy2 - oy1);
+            int oerror = odx + ody;
+
+            int ox1_old = ox1;
+            int oy1_old = oy1;
+            int dGx = 0;
+            int dGy = 0;
+
+            int x1, x2, y1, y2, x1_old, y1_old, dx, dy, sx, sy, error, dLx, dLy, tempx, tempy;
+
+            while (true)
+            {
+                x1 = ox1 + gx1;
+                x2 = ox1 + gx2;
+                y1 = oy1 + gy1;
+                y2 = oy1 + gy2;
+
+                dx = Math.Abs(x2 - x1);
+                dy = -Math.Abs(y2 - y1);
+                sx = x1 < x2 ? 1 : -1;
+                sy = y1 < y2 ? 1 : -1;
+                error = dx + dy;
+
+                if (Math.Abs(dGx) + Math.Abs(dGy) == 2)
+                {
+                    x1_old = x1;
+                    y1_old = y1;
+                    dLx = 0;
+                    dLy = 0;
+
+                    while (true)
+                    {
+                        if (0 <= y1 && y1 < this._pixelHeight && 0 <= x1 && x1 < this._pixelWidth)
+                            this._paintLayer(layer, this._pixelWidth * y1 + x1, color);
+
+                        tempx = (dLx - dGx) / 2 + x1_old;
+                        tempy = (dLy - dGy) / 2 + y1_old;
+
+                        if (Math.Abs(dLx) + Math.Abs(dLy) == 2 && 0 <= tempy && tempy < this._pixelHeight && 0 <= tempx && tempx < this._pixelWidth)
+                            this._paintLayer(layer, this._pixelWidth * tempy + tempx, color);
+
+                        x1_old = x1;
+                        y1_old = y1;
+
+                        if (x1 == x2 && y1 == y2)
+                            break;
+
+                        int e2 = 2 * error;
+
+                        if (e2 >= dy)
+                        {
+                            if (x1 == x2) break;
+                            error += dy;
+                            x1 += sx;
+                        }
+
+                        if (e2 <= dx)
+                        {
+                            if (y1 == y2) break;
+                            error += dx;
+                            y1 += sy;
+                        }
+
+                        dLx = x1 - x1_old;
+                        dLy = y1 - y1_old;
+                    }
+                } 
+                else
+                {
+                    while (true)
+                    {
+                        if (0 <= y1 && y1 < this._pixelHeight && 0 <= x1 && x1 < this._pixelWidth)
+                            this._paintLayer(layer, this._pixelWidth * y1 + x1, color);
+
+                        if (x1 == x2 && y1 == y2)
+                            break;
+
+                        int e2 = 2 * error;
+
+                        if (e2 >= dy)
+                        {
+                            if (x1 == x2) break;
+                            error += dy;
+                            x1 += sx;
+                        }
+
+                        if (e2 <= dx)
+                        {
+                            if (y1 == y2) break;
+                            error += dx;
+                            y1 += sy;
+                        }
+                    }
+                }
+
+                //
+
+                if (ox1 == ox2 && oy1 == oy2) break;
+
+                int oe2 = 2 * oerror;
+
+                if (oe2 >= ody)
+                {
+                    if (ox1 == ox2) break;
+                    oerror += ody;
+                    ox1 += osx;
+                }
+
+                if (oe2 <= odx)
+                {
+                    if (oy1 == oy2) break;
+                    oerror += odx;
+                    oy1 += osy;
+                }
+
+                dGx = ox1 - ox1_old;
+                dGy = oy1 - oy1_old;
+
+                ox1_old = ox1;
+                oy1_old = oy1;
+            }
+
+            /*
+            // Calculate and draw across
+
+            x1 = ox1 + gx1;
+            x2 = ox1 + gx2;
+            y1 = oy1 + gy1;
+            y2 = oy1 + gy2;
+
+            xChange = ox1 - ox1prev;
+            yChange = oy1 - oy1prev;
+
+            calc_and_draw:
+            dx = Math.Abs(x2 - x1);
+            dy = -Math.Abs(y2 - y1);
+            sx = x1 < x2 ? 1 : -1;
+            sy = y1 < y2 ? 1 : -1;
+            error = dx + dy;
+
+            while (true)
+            {
+                this._paintLayer(layer, this._pixelWidth * y1 + x1, color);
+
+                if (x1 == x2 && y1 == y2)
+                {
+                    if (xChange == 0 || yChange == 0) break;
+
+                    x1 = ox1 + gx1;
+                    x2 = ox1 + gx2;
+                    y1 = oy1 + gy1 - yChange;
+                    y2 = oy1 + gy2 - yChange;
+
+                    xChange = 0;
+                    yChange = 0;
+                    goto calc_and_draw;
+                }
+
+                int e2 = 2 * error;
+
+                if (e2 >= dy)
+                {
+                    if (x1 == x2)
+                    {
+                        if (xChange == 0 || yChange == 0) break;
+
+                        x1 = ox1 + gx1;
+                        x2 = ox1 + gx2;
+                        y1 = oy1 + gy1 - yChange;
+                        y2 = oy1 + gy2 - yChange;
+
+                        xChange = 0;
+                        yChange = 0;
+                        goto calc_and_draw;
+                    }
+                    error += dy;
+                    x1 += sx;
+                }
+
+                if (e2 <= dx)
+                {
+                    if (y1 == y2)
+                    {
+                        if (xChange == 0 || yChange == 0) break;
+
+                        x1 = ox1 + gx1;
+                        x2 = ox1 + gx2;
+                        y1 = oy1 + gy1 - yChange;
+                        y2 = oy1 + gy2 - yChange;
+
+                        xChange = 0;
+                        yChange = 0;
+                        goto calc_and_draw;
+                    }
+                    error += dx;
+                    y1 += sy;
+                }
+            }
+
+            // Pick next perpendicular
+
+            ox1prev = ox1;
+            oy1prev = oy1;
+
+
+            if (ox1 == ox2 && oy1 == oy2) break;
+
+            int oe2 = 2 * oerror;
+
+            if (oe2 >= ody)
+            {
+                if (ox1 == ox2) break;
+                oerror += ody;
+                ox1 += osx;
+            }
+
+            if (oe2 <= odx)
+            {
+                if (oy1 == oy2) break;
+                oerror += odx;
+                oy1 += osy;
+            }
+        }*/
+
+            /*Point leftP = Math.Min(p1.X, p2.X) == p1.X ? p1 : p2;
             Point rightP = leftP == p1 ? p2 : p1;
 
             double distance = (rightP - leftP).Length;
@@ -449,7 +696,7 @@ namespace CustomDrawingWithWPF
                         this._paintLayer(layer, this._pixelWidth * y + x, color);
                     }
                 }
-            }
+            }*/
 
             /*Vector pD = p2 - p1;
 
