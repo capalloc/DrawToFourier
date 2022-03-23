@@ -299,80 +299,64 @@ namespace CustomDrawingWithWPF
             this._drawLine(new Point(circleCenter.X + radius * Math.Cos(t + unitAngle), circleCenter.Y + radius * Math.Sin(t + unitAngle)), prevPoint, brushSize, color, layer);
         }
 
+        //TODO: does not check for draw area boundaries. fix that
         private void _drawSolidCircle(Point circleCenter, int diameter, uint color, int layer)
         {
-            int w, h;
-            h = w = diameter;
-            double cX, cY; // Adjusted circle center
-
-            if (diameter % 2 == 0)  // If diameter is even
-            {
-                cX = Math.Round(circleCenter.X - 0.5) + 0.5;
-                cY = Math.Round(circleCenter.Y - 0.5) + 0.5;
-            }
-            else  // If diameter is odd
-            {
-                cX = Math.Round(circleCenter.X);
-                cY = Math.Round(circleCenter.Y);
-            }
-
-            int rX = (int)(cX - diameter / 2.0 + 0.5);
-            int rY = (int)(cY - diameter / 2.0 + 0.5);
-
-            if (rX < 0)
-            {
-                w -= -rX;
-                rX = 0;
-            }
-            if (rY < 0)
-            {
-                h -= -rY;
-                rY = 0;
-            }
-
-            if (h <= 0 || w <= 0) // If circle is completely outside the bounds
+            if (diameter == 0)
                 return;
 
-            if (rX + w > this._pixelWidth)
-            {
-                w = this._pixelWidth - rX;
-            }
-            if (rY + h > this._pixelHeight)
-            {
-                h = this._pixelHeight - rY;
-            }
+            int cx = (int)circleCenter.X;
+            int cy = (int)circleCenter.Y;
+            int radius = diameter / 2;
 
-            if (h <= 0 || w <= 0) // If circle is completely outside the bounds
+            if (radius == 0)
+            {
+                this._paintLayer(layer, this._pixelWidth * cy + cx, color);
                 return;
+            }
 
-            if (diameter % 2 == 0)  // If diameter is even
+            int x = 0;
+            int y = radius;
+            int d = 3 - 2 * radius;
+
+            this._paintLayer(layer, this._pixelWidth * (y + cy) + x + cx, color);
+            this._paintLayer(layer, this._pixelWidth * (-y + cy) + x + cx, color);
+
+            for (int i = -y; i <= y; i++)
+                this._paintLayer(layer, this._pixelWidth * (x + cy) + i + cx, color);
+
+            while (x < y)
             {
-                for (int i = 0; i < h; i++)
+                if (d < 0) 
                 {
-                    double relY = rY - cY + i;
-                    double startX = Math.Round(-Math.Sqrt(Math.Pow(diameter / 2.0, 2) - Math.Pow(relY, 2)) - double.Epsilon) + 0.5;
-                    double endX = -Math.Round(-Math.Sqrt(Math.Pow(diameter / 2.0, 2) - Math.Pow(relY, 2)) - double.Epsilon) - 0.5;
+                    d += (4 * ++x) + 6;
 
-                    int jStart = Math.Max((int)(cX - rX + startX), 0);
-                    int jEnd = Math.Min((int)(cX - rX + endX), w - 1);
+                    for (int i = -y; i <= y; i++)
+                    {
+                        this._paintLayer(layer, this._pixelWidth * (x + cy) + i + cx, color);
+                        this._paintLayer(layer, this._pixelWidth * (-x + cy) + i + cx, color);
+                    }
 
-                    for (int j = jStart; j <= jEnd; j++)
-                        this._paintLayer(layer, (i + rY) * this._pixelWidth + rX + j, color);
+                    this._paintLayer(layer, this._pixelWidth * ( y + cy) + x + cx, color);
+                    this._paintLayer(layer, this._pixelWidth * ( y + cy) - x + cx, color);
+                    this._paintLayer(layer, this._pixelWidth * (-y + cy) - x + cx, color);
+                    this._paintLayer(layer, this._pixelWidth * (-y + cy) + x + cx, color);
                 }
-            }
-            else  // If diameter is odd
-            {
-                for (int i = 0; i < h; i++)
+                else
                 {
-                    double relY = rY - cY + i;
-                    double startX = Math.Round(-Math.Sqrt(Math.Pow(diameter / 2.0, 2) - Math.Pow(relY, 2)) + 0.5 - double.Epsilon);
-                    double endX = -Math.Round(-Math.Sqrt(Math.Pow(diameter / 2.0, 2) - Math.Pow(relY, 2)) + 0.5 - double.Epsilon);
+                    d += 4 * (++x - y--) + 10;
 
-                    int jStart = Math.Max((int)(cX - rX + startX), 0);
-                    int jEnd = Math.Min((int)(cX - rX + endX), w - 1);
+                    for (int i = -y; i <= y; i++)
+                    {
+                        this._paintLayer(layer, this._pixelWidth * (x + cy) + i + cx, color);
+                        this._paintLayer(layer, this._pixelWidth * (-x + cy) + i + cx, color);
+                    }
 
-                    for (int j = jStart; j <= jEnd; j++)
-                        this._paintLayer(layer, (i + rY) * this._pixelWidth + rX + j, color);
+                    for (int i = -x; i <= x; i++)
+                    {
+                        this._paintLayer(layer, this._pixelWidth * (y + cy) + i + cx, color);
+                        this._paintLayer(layer, this._pixelWidth * (-y + cy) + i + cx, color);
+                    }
                 }
             }
         }
@@ -517,231 +501,6 @@ namespace CustomDrawingWithWPF
                 ox1_old = ox1;
                 oy1_old = oy1;
             }
-
-            /*
-            // Calculate and draw across
-
-            x1 = ox1 + gx1;
-            x2 = ox1 + gx2;
-            y1 = oy1 + gy1;
-            y2 = oy1 + gy2;
-
-            xChange = ox1 - ox1prev;
-            yChange = oy1 - oy1prev;
-
-            calc_and_draw:
-            dx = Math.Abs(x2 - x1);
-            dy = -Math.Abs(y2 - y1);
-            sx = x1 < x2 ? 1 : -1;
-            sy = y1 < y2 ? 1 : -1;
-            error = dx + dy;
-
-            while (true)
-            {
-                this._paintLayer(layer, this._pixelWidth * y1 + x1, color);
-
-                if (x1 == x2 && y1 == y2)
-                {
-                    if (xChange == 0 || yChange == 0) break;
-
-                    x1 = ox1 + gx1;
-                    x2 = ox1 + gx2;
-                    y1 = oy1 + gy1 - yChange;
-                    y2 = oy1 + gy2 - yChange;
-
-                    xChange = 0;
-                    yChange = 0;
-                    goto calc_and_draw;
-                }
-
-                int e2 = 2 * error;
-
-                if (e2 >= dy)
-                {
-                    if (x1 == x2)
-                    {
-                        if (xChange == 0 || yChange == 0) break;
-
-                        x1 = ox1 + gx1;
-                        x2 = ox1 + gx2;
-                        y1 = oy1 + gy1 - yChange;
-                        y2 = oy1 + gy2 - yChange;
-
-                        xChange = 0;
-                        yChange = 0;
-                        goto calc_and_draw;
-                    }
-                    error += dy;
-                    x1 += sx;
-                }
-
-                if (e2 <= dx)
-                {
-                    if (y1 == y2)
-                    {
-                        if (xChange == 0 || yChange == 0) break;
-
-                        x1 = ox1 + gx1;
-                        x2 = ox1 + gx2;
-                        y1 = oy1 + gy1 - yChange;
-                        y2 = oy1 + gy2 - yChange;
-
-                        xChange = 0;
-                        yChange = 0;
-                        goto calc_and_draw;
-                    }
-                    error += dx;
-                    y1 += sy;
-                }
-            }
-
-            // Pick next perpendicular
-
-            ox1prev = ox1;
-            oy1prev = oy1;
-
-
-            if (ox1 == ox2 && oy1 == oy2) break;
-
-            int oe2 = 2 * oerror;
-
-            if (oe2 >= ody)
-            {
-                if (ox1 == ox2) break;
-                oerror += ody;
-                ox1 += osx;
-            }
-
-            if (oe2 <= odx)
-            {
-                if (oy1 == oy2) break;
-                oerror += odx;
-                oy1 += osy;
-            }
-        }*/
-
-            /*Point leftP = Math.Min(p1.X, p2.X) == p1.X ? p1 : p2;
-            Point rightP = leftP == p1 ? p2 : p1;
-
-            double distance = (rightP - leftP).Length;
-            double cos = (rightP.X - leftP.X) / distance;
-            double sin = (rightP.Y - leftP.Y) / distance;
-
-            this._drawSolidCircle(leftP, brushSize, color, layer);
-            this._drawSolidCircle(rightP, brushSize, color, layer);
-
-            int lowerY;
-            int upperY;
-            int lowerX;
-            int upperX;
-
-            if (sin >= 0)
-            {
-                lowerY = Math.Max((int)(leftP.Y - brushSize * cos / 2), 0);
-                upperY = Math.Min((int)(rightP.Y + brushSize * cos / 2), this._pixelHeight - 1);
-
-                for (int y = lowerY; y <= upperY; y++)
-                {
-                    if (y <= leftP.Y + brushSize * cos / 2 && cos != 0)
-                    {
-                        lowerX = Math.Max((int)(-sin * y / cos + sin * leftP.Y / cos + leftP.X), 0);
-                    }
-                    else
-                    {
-                        lowerX = Math.Max((int)(cos * y / sin - cos * leftP.Y / sin + leftP.X - brushSize / (2 * sin)), 0);
-                    }
-
-                    if (y <= rightP.Y - brushSize * cos / 2 && sin != 0)
-                    {
-                        upperX = Math.Min((int)(cos * y / sin - cos * leftP.Y / sin + leftP.X + brushSize / (2 * sin)), this._pixelWidth - 1);
-                    }
-                    else
-                    {
-                        upperX = Math.Min((int)(-sin * y / cos + sin * rightP.Y / cos + rightP.X), this._pixelWidth - 1);
-                    }
-
-                    for (int x = lowerX; x <= upperX; x++)
-                    {
-                        this._paintLayer(layer, this._pixelWidth * y + x, color);
-                    }
-                }
-            } 
-            else
-            {
-                lowerY = Math.Max((int)(rightP.Y - brushSize * cos / 2), 0);
-                upperY = Math.Min((int)(leftP.Y + brushSize * cos / 2), this._pixelHeight - 1);
-
-                for (int y = lowerY; y <= upperY; y++)
-                {
-                    if (y <= leftP.Y - brushSize * cos / 2 && sin != 0)
-                    {
-                        lowerX = Math.Max((int)(cos * y / sin - cos * leftP.Y / sin + leftP.X + brushSize / (2 * sin)), 0);
-                    }
-                    else
-                    {
-                        lowerX = Math.Max((int)(-sin * y / cos + sin * leftP.Y / cos + leftP.X), 0);
-                    }
-
-                    if (y <= rightP.Y + brushSize * cos / 2 && cos != 0)
-                    {
-                        upperX = Math.Min((int)(-sin * y / cos + sin * rightP.Y / cos + rightP.X), this._pixelWidth - 1);
-                    }
-                    else
-                    {
-                        upperX = Math.Min((int)(cos * y / sin - cos * leftP.Y / sin + leftP.X - brushSize / (2 * sin)), this._pixelWidth - 1);
-                    }
-
-                    for (int x = lowerX; x <= upperX; x++)
-                    {
-                        this._paintLayer(layer, this._pixelWidth * y + x, color);
-                    }
-                }
-            }*/
-
-            /*Vector pD = p2 - p1;
-
-            if (Math.Abs(pD.X) >= Math.Abs(pD.Y))
-            {
-                if (p1.X < p2.X)
-                {
-
-                    for (int x = (int)p1.X; x <= (int)p2.X; x++)
-                    {
-                        Point targetP = new Point((double)x, Linear(x, p1, p2));
-                        this._drawSolidCircle(targetP, brushSize, color, layer);
-                    }
-                }
-                else
-                {
-                    for (int x = (int)p2.X; x <= (int)p1.X; x++)
-                    {
-                        Point targetP = new Point((double)x, Linear(x, p1, p2));
-                        this._drawSolidCircle(targetP, brushSize, color, layer);
-                    }
-                }
-            }
-            else
-            {
-                Point tp1 = new Point(p1.Y, p1.X);
-                Point tp2 = new Point(p2.Y, p2.X);
-
-                if (p1.Y < p2.Y)
-                {
-                    for (int y = (int)p1.Y; y <= (int)p2.Y; y++)
-                    {
-                        Point targetP = new Point(Linear(y, tp1, tp2), (double)y);
-                        this._drawSolidCircle(targetP, brushSize, color, layer);
-                    }
-                }
-                else
-                {
-                    for (int y = (int)p2.Y; y <= (int)p1.Y; y++)
-                    {
-                        Point targetP = new Point(Linear(y, tp1, tp2), (double)y);
-                        this._drawSolidCircle(targetP, brushSize, color, layer);
-                    }
-                }
-            }*/
         }
 
     }
