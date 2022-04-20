@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
+using CustomDrawingWithWPF;
 using DrawToFourier.Fourier;
 using DrawToFourier.UI;
 
@@ -161,7 +162,6 @@ namespace DrawToFourier
 
             this._resultWindow = new ResultWindow(this._imgHandlerResult, this._initialDrawAreaLength, this._initialDrawAreaLength);
             this._resultWindow.Show();
-            this._imgHandlerResult.Update();
         }
 
         private void AppStartupHandler(object sender, StartupEventArgs e)
@@ -173,9 +173,10 @@ namespace DrawToFourier
         private void DrawLines(LinkedList<Line> lines)
         {
             foreach (Line line in lines)
-                if (line.IsSolid) this._imgHandlerDraw.DrawLine(line.Start, line.End, defaultBrushSize);
+                if (line.IsSolid) this._imgHandlerDraw.DrawLine(line.Start, line.End, defaultBrushSize, 255, 255, 255);
 
-            this._imgHandlerDraw.Update();
+            this._imgHandlerDraw.ComposeLayers();
+            this._imgHandlerDraw.RenderBuffer();
         }
     }
 }
